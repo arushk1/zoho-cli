@@ -1,0 +1,31 @@
+{
+  "name": "@zoho-cli/plugin-expense",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.10.0",
+    "@zoho-cli/core": "workspace:*",
+    "form-data": "^4.0.5"
+  },
+  "devDependencies": {
+    "@oclif/test": "^4.1.0",
+    "@types/node": "^25.5.2",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "topics": {
+      "expense": {
+        "description": "Zoho Expense commands"
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "@zoho-cli/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "zoho": "./bin/run.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "dev": "./bin/dev.js"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.10.0",
+    "@oclif/plugin-help": "^6.2.0",
+    "@zoho-cli/core": "workspace:*",
+    "@zoho-cli/plugin-books": "workspace:*",
+    "@zoho-cli/plugin-crm": "workspace:*",
+    "@zoho-cli/plugin-projects": "workspace:*",
+    "@zoho-cli/plugin-people": "workspace:*",
+    "@zoho-cli/plugin-expense": "workspace:*",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@oclif/test": "^4.1.0",
+    "@types/node": "^25.5.2",
+    "oclif": "^4.22.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "oclif": {
+    "bin": "zoho",
+    "dirname": "zoho-cli",
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@zoho-cli/plugin-books",
+      "@zoho-cli/plugin-crm",
+      "@zoho-cli/plugin-projects",
+      "@zoho-cli/plugin-people",
+      "@zoho-cli/plugin-expense"
+    ],
+    "topics": {
+      "auth": {
+        "description": "Manage Zoho authentication"
+      },
+      "config": {
+        "description": "Manage CLI configuration"
+      }
+    }
+  }
+}
