@@ -39,6 +39,15 @@ export const PEOPLE_REGION_DOMAINS: Record<ZohoRegion, string> = {
   ca: 'people.zoho.ca',
 }
 
+export const DESK_REGION_DOMAINS: Record<ZohoRegion, string> = {
+  us: 'desk.zoho.com',
+  eu: 'desk.zoho.eu',
+  in: 'desk.zoho.in',
+  au: 'desk.zoho.com.au',
+  jp: 'desk.zoho.jp',
+  ca: 'desk.zoho.ca',
+}
+
 export const configSchema = z.object({
   region: z.enum(ZOHO_REGIONS).default('in'),
   clientId: z.string().optional(),
