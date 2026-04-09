@@ -126,6 +126,31 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@25.5.2)
 
+  packages/plugin-desk:
+    dependencies:
+      '@oclif/core':
+        specifier: ^4.10.0
+        version: 4.10.5
+      '@zoho-cli/core':
+        specifier: workspace:*
+        version: link:../core
+      form-data:
+        specifier: ^4.0.5
+        version: 4.0.5
+    devDependencies:
+      '@oclif/test':
+        specifier: ^4.1.0
+        version: 4.1.18(@oclif/core@4.10.5)
+      '@types/node':
+        specifier: ^25.5.2
+        version: 25.5.2
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.5.2)
+
   packages/plugin-expense:
     dependencies:
       '@oclif/core':
