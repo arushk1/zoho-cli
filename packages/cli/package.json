@@ -22,6 +22,7 @@
     "@zoho-cli/plugin-projects": "workspace:*",
     "@zoho-cli/plugin-people": "workspace:*",
     "@zoho-cli/plugin-expense": "workspace:*",
+    "@zoho-cli/plugin-desk": "workspace:*",
     "open": "^11.0.0"
   },
   "devDependencies": {
@@ -42,7 +43,8 @@
       "@zoho-cli/plugin-crm",
       "@zoho-cli/plugin-projects",
       "@zoho-cli/plugin-people",
-      "@zoho-cli/plugin-expense"
+      "@zoho-cli/plugin-expense",
+      "@zoho-cli/plugin-desk"
     ],
     "topics": {
       "auth": {

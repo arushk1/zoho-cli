@@ -25,6 +25,9 @@ importers:
       '@zoho-cli/plugin-crm':
         specifier: workspace:*
         version: link:../plugin-crm
+      '@zoho-cli/plugin-desk':
+        specifier: workspace:*
+        version: link:../plugin-desk
       '@zoho-cli/plugin-expense':
         specifier: workspace:*
         version: link:../plugin-expense
