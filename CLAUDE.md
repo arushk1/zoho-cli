@@ -11,6 +11,7 @@ Monorepo with 5 packages:
 - **`packages/plugin-crm`** (`@zoho-cli/plugin-crm`) — oclif plugin with 65 CRM commands
 - **`packages/plugin-projects`** (`@zoho-cli/plugin-projects`) — oclif plugin with 87 Projects commands
 - **`packages/plugin-people`** (`@zoho-cli/plugin-people`) — oclif plugin with 100 People commands
+- **`packages/plugin-desk`** (`@zoho-cli/plugin-desk`) — oclif plugin with 151 Desk commands
 
 ## Build & Test
 
@@ -149,6 +150,47 @@ Key differences from CRM/Projects:
 - Many legacy endpoints use form-encoded requests — base command helpers handle this transparently
 - Scope format: `ZOHOPEOPLE.{module}.{operation}` (e.g., `ZOHOPEOPLE.forms.ALL`)
 
+### Adding a new Desk command
+
+All Desk commands extend `DeskBaseCommand` from `packages/plugin-desk/src/desk-base-command.ts`. Pattern:
+
+```typescript
+import { Args, Flags } from '@oclif/core'
+import { DeskBaseCommand } from '../../../desk-base-command.js'
+
+export default class DeskExampleList extends DeskBaseCommand<typeof DeskExampleList> {
+  static id = 'desk example list'
+  static summary = 'Description here'
+
+  static flags = {
+    page: Flags.integer({ description: 'Page number', default: 1 }),
+    'per-page': Flags.integer({ description: 'Records per page (max 100)', default: 100 }),
+  }
+
+  async run(): Promise<void> {
+    const { flags } = this
+    try {
+      const params: Record<string, string> = {
+        ...DeskBaseCommand.paginationParams(flags),
+      }
+      const data = await this.deskGet('/example', params)
+      this.outputSuccess(data.data ?? [], { action: 'example.list' })
+    } catch (error: any) {
+      this.handleApiError(error)
+    }
+  }
+}
+```
+
+Key differences from other plugins:
+- Extends `DeskBaseCommand` — provides typed helpers `deskGet`, `deskPost`, `deskPatch`, `deskDelete` that auto-inject `orgId` header
+- Uses `DeskBaseCommand.paginationParams(flags)` to convert `--page`/`--per-page` to Desk's `from`/`limit` offset pagination
+- Org ID resolved from `--org` flag > `config.defaultOrg` > `ZOHO_DESK_ORG_ID` env var > API auto-detect
+- API base URL: `https://desk.zoho.{domain}/api/v1` (different from CRM/Projects/People)
+- Single API version (v1) — no version flag
+- Updates use `PATCH` method (via `deskPatch`)
+- Error format uses `errorCode` field (not `code`)
+
 ### Adding a new CLI command
 
 CLI commands extend `BaseCommand` from `packages/cli/src/base-command.ts`. Same pattern but without CRM-specific features (no `apiClient`, no `moduleCache`).
@@ -235,6 +277,42 @@ packages/
       dashboards/             — list, get, create, update, delete
       blueprints/             — list, transitions, execute
       feed/                   — list, create
+  plugin-desk/src/
+    desk-base-command.ts       — Desk base with --org flag, lazy apiClient, deskGet/Post/Patch/Delete helpers, paginationParams
+    commands/desk/
+      search.ts                — Cross-module search
+      tickets/                 — CRUD + move, merge, split, close, spam, unspam, count, search, history, metrics, blueprint
+        resolution/            — get, add, update, delete
+      threads/                 — list, get, reply, draft
+      ticket-comments/         — list, get, add, update, delete
+      ticket-attachments/      — list, get, upload, download, delete
+      ticket-tags/             — list, add, remove
+      ticket-time-entries/     — list, get, create, update, delete
+      ticket-timers/           — start, pause, resume, stop, status
+      contacts/                — CRUD + search, count, tickets
+      accounts/                — CRUD + search, count, tickets
+      agents/                  — CRUD + me, count, activate
+      departments/             — CRUD
+      tasks/                   — CRUD + count, search
+      time-entries/            — CRUD (global)
+      activities/              — list, count
+      calls/                   — CRUD + count
+      events/                  — CRUD + count
+      articles/                — CRUD + search, count
+      kb-categories/           — CRUD
+      kb-sections/             — list, get, create
+      products/                — CRUD + count
+      tags/                    — CRUD + count
+      views/                   — CRUD
+      organizations/           — list, get
+      roles/                   — list, get
+      profiles/                — list, get
+      teams/                   — list, get
+      sla/                     — list, get
+      business-hours/          — list, get
+      fields/                  — list (with --module flag)
+      layouts/                 — list, get
+      blueprints/              — list
   plugin-people/src/
     people-base-command.ts    — People base with form CRUD helpers, timetracker helper, response normalization
     commands/people/
@@ -284,6 +362,14 @@ packages/
 - Rate limiting: varies by endpoint (30-400 req/5min), no response headers, 5-min lock on exceed
 - Scope format: `ZOHOPEOPLE.{module}.{operation}` (e.g., `ZOHOPEOPLE.forms.ALL`)
 - Team management: `--data-select` flag (MINE/SUBS/DIRSUBS/ALL) on leave list, compensatory
+
+### Desk API
+- Base URL: `https://desk.zoho.{domain}/api/v1`
+- Single API version: v1
+- Required header: `orgId` on every request (except `/organizations`)
+- Pagination: `from` (1-based offset) + `limit` (max 100), converted from `--page`/`--per-page` by base command
+- Rate limiting: Daily credit pool (4,000–25,000/day/org depending on plan)
+- Scope format: `Desk.{module}.{operation}` (e.g., `Desk.tickets.ALL`)
 
 ### Common
 - Region: India (.in) default, configurable via `zoho config set region <region>`
