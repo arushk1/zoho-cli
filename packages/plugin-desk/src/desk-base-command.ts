@@ -130,6 +130,17 @@ export abstract class DeskBaseCommand<T extends typeof Command> extends Command 
     return data
   }
 
+  protected async deskUpload<R = any>(
+    path: string,
+    form: { getHeaders(): Record<string, string> },
+    params?: Record<string, string>,
+  ): Promise<R> {
+    const orgHeaders = await this.orgHeaders()
+    const headers = { ...orgHeaders, ...form.getHeaders() }
+    const { data } = await this.apiClient.post<R>(path, form, { params, headers })
+    return data
+  }
+
   protected async deskDownload(path: string, outputPath: string): Promise<void> {
     const headers = await this.orgHeaders()
     const { data } = await this.apiClient.get<ArrayBuffer>(path, {

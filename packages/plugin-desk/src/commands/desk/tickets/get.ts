@@ -11,6 +11,7 @@ export default class DeskTicketsGet extends DeskBaseCommand<typeof DeskTicketsGe
 
   static flags = {
     include: Flags.string({ description: 'Comma-separated list of related data to include (e.g. contacts,products)' }),
+    fields: Flags.string({ description: 'Comma-separated list of fields to return' }),
   }
 
   async run(): Promise<void> {
@@ -18,6 +19,7 @@ export default class DeskTicketsGet extends DeskBaseCommand<typeof DeskTicketsGe
     try {
       const params: Record<string, string> = {}
       if (flags.include) params.include = flags.include
+      if (flags.fields) params.fields = flags.fields
 
       const data = await this.deskGet(`/tickets/${args.id}`, params)
       this.outputSuccess(data, { action: 'desk.tickets.get' })

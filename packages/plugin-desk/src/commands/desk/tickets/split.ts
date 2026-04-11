@@ -19,13 +19,11 @@ export default class DeskTicketsSplit extends DeskBaseCommand<typeof DeskTickets
       let body: unknown
       try {
         body = JSON.parse(flags.data)
-      } catch (error: any) {
-        if (error instanceof SyntaxError) {
-          this.outputError('INVALID_JSON', 'Invalid JSON in --data flag')
-          this.exit(3)
-        }
-        this.handleApiError(error)
+      } catch {
+        this.outputError('INVALID_JSON', 'The --data flag must be valid JSON')
+        this.exit(3)
       }
+
       const data = await this.deskPost(`/tickets/${args.id}/split`, body)
       this.outputSuccess(data ?? {}, { action: 'desk.tickets.split' })
     } catch (error: any) {

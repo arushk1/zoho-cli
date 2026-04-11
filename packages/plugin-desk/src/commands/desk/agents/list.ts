@@ -10,6 +10,7 @@ export default class DeskAgentsList extends DeskBaseCommand<typeof DeskAgentsLis
     'per-page': Flags.integer({ description: 'Results per page', default: 100 }),
     department: Flags.string({ description: 'Filter by department ID' }),
     status: Flags.string({ description: 'Filter by agent status' }),
+    fields: Flags.string({ description: 'Comma-separated list of fields to return' }),
   }
 
   async run(): Promise<void> {
@@ -20,6 +21,7 @@ export default class DeskAgentsList extends DeskBaseCommand<typeof DeskAgentsLis
       }
       if (flags.department) params.departmentId = flags.department
       if (flags.status) params.status = flags.status
+      if (flags.fields) params.fields = flags.fields
 
       const data = await this.deskGet('/agents', params)
       this.outputSuccess(data.data ?? [], { action: 'desk.agents.list' })

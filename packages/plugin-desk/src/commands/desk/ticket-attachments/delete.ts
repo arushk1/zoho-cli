@@ -11,11 +11,16 @@ export default class DeskTicketAttachmentsDelete extends DeskBaseCommand<typeof 
 
   static flags = {
     ticket: Flags.string({ description: 'Ticket ID', required: true, char: 't' }),
+    'dry-run': Flags.boolean({ description: 'Preview without deleting', default: false }),
   }
 
   async run(): Promise<void> {
     const { args, flags } = this
     try {
+      if (flags['dry-run']) {
+        this.outputSuccess({ deleted: false, id: args.id, ticket: flags.ticket, dryRun: true }, { action: 'desk.ticket-attachments.delete.dry-run' })
+        return
+      }
       await this.deskDelete(`/tickets/${flags.ticket}/attachments/${args.id}`)
       this.outputSuccess({ deleted: true, id: args.id }, { action: 'desk.ticket-attachments.delete' })
     } catch (error: any) {

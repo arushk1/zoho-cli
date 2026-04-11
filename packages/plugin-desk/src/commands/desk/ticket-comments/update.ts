@@ -12,6 +12,7 @@ export default class DeskTicketCommentsUpdate extends DeskBaseCommand<typeof Des
   static flags = {
     ticket: Flags.string({ description: 'Ticket ID', required: true, char: 't' }),
     data: Flags.string({ description: 'JSON with updated comment fields', required: true, char: 'd' }),
+    'dry-run': Flags.boolean({ description: 'Preview without updating', default: false }),
   }
 
   async run(): Promise<void> {
@@ -23,6 +24,11 @@ export default class DeskTicketCommentsUpdate extends DeskBaseCommand<typeof Des
       } catch {
         this.outputError('INVALID_JSON', 'The --data flag must be valid JSON')
         this.exit(3)
+      }
+
+      if (flags['dry-run']) {
+        this.outputSuccess({ id: args.id, ticket: flags.ticket, body, dryRun: true }, { action: 'desk.ticket-comments.update.dry-run' })
+        return
       }
 
       const data = await this.deskPatch(`/tickets/${flags.ticket}/comments/${args.id}`, body)

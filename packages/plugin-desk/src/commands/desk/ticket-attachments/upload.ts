@@ -17,7 +17,7 @@ export default class DeskTicketAttachmentsUpload extends DeskBaseCommand<typeof 
     try {
       const form = new FormData()
       form.append('file', createReadStream(flags.file))
-      const data = await this.deskPost(`/tickets/${flags.ticket}/attachments`, form)
+      const data = await this.deskUpload(`/tickets/${flags.ticket}/attachments`, form)
       this.outputSuccess(data, { action: 'desk.ticket-attachments.upload' })
     } catch (error: any) {
       this.handleApiError(error)

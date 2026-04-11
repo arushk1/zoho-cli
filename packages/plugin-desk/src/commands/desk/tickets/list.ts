@@ -14,6 +14,7 @@ export default class DeskTicketsList extends DeskBaseCommand<typeof DeskTicketsL
     'sort-by': Flags.string({ description: 'Field to sort by' }),
     'sort-order': Flags.string({ description: 'Sort order', options: ['asc', 'desc'] }),
     'view-id': Flags.string({ description: 'Filter by view ID' }),
+    fields: Flags.string({ description: 'Comma-separated list of fields to return' }),
   }
 
   async run(): Promise<void> {
@@ -28,6 +29,7 @@ export default class DeskTicketsList extends DeskBaseCommand<typeof DeskTicketsL
       if (flags['sort-by']) params.sortBy = flags['sort-by']
       if (flags['sort-order']) params.sortOrder = flags['sort-order']
       if (flags['view-id']) params.viewId = flags['view-id']
+      if (flags.fields) params.fields = flags.fields
 
       const data = await this.deskGet('/tickets', params)
       this.outputSuccess(data.data ?? [], { action: 'desk.tickets.list' })

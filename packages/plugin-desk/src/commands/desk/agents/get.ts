@@ -1,4 +1,4 @@
-import { Args } from '@oclif/core'
+import { Args, Flags } from '@oclif/core'
 import { DeskBaseCommand } from '../../../desk-base-command.js'
 
 export default class DeskAgentsGet extends DeskBaseCommand<typeof DeskAgentsGet> {
@@ -9,10 +9,17 @@ export default class DeskAgentsGet extends DeskBaseCommand<typeof DeskAgentsGet>
     id: Args.string({ description: 'Agent ID', required: true }),
   }
 
+  static flags = {
+    fields: Flags.string({ description: 'Comma-separated list of fields to return' }),
+  }
+
   async run(): Promise<void> {
-    const { args } = this
+    const { args, flags } = this
     try {
-      const data = await this.deskGet(`/agents/${args.id}`)
+      const params: Record<string, string> = {}
+      if (flags.fields) params.fields = flags.fields
+
+      const data = await this.deskGet(`/agents/${args.id}`, params)
       this.outputSuccess(data, { action: 'desk.agents.get' })
     } catch (error: any) {
       this.handleApiError(error)

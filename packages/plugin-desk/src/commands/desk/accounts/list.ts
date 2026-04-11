@@ -10,6 +10,7 @@ export default class DeskAccountsList extends DeskBaseCommand<typeof DeskAccount
     'per-page': Flags.integer({ description: 'Results per page', default: 100 }),
     'sort-by': Flags.string({ description: 'Field to sort by' }),
     'sort-order': Flags.string({ description: 'Sort order', options: ['asc', 'desc'] }),
+    fields: Flags.string({ description: 'Comma-separated list of fields to return' }),
   }
 
   async run(): Promise<void> {
@@ -20,6 +21,7 @@ export default class DeskAccountsList extends DeskBaseCommand<typeof DeskAccount
       }
       if (flags['sort-by']) params.sortBy = flags['sort-by']
       if (flags['sort-order']) params.sortOrder = flags['sort-order']
+      if (flags.fields) params.fields = flags.fields
 
       const data = await this.deskGet('/accounts', params)
       this.outputSuccess(data.data ?? [], { action: 'desk.accounts.list' })

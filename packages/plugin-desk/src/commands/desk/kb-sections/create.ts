@@ -13,7 +13,14 @@ export default class DeskKbSectionsCreate extends DeskBaseCommand<typeof DeskKbS
   async run(): Promise<void> {
     const { flags } = this
     try {
-      const body = JSON.parse(flags.data)
+      let body: unknown
+      try {
+        body = JSON.parse(flags.data)
+      } catch {
+        this.outputError('INVALID_JSON', 'The --data flag must be valid JSON')
+        this.exit(3)
+      }
+
       if (flags['dry-run']) {
         this.outputSuccess(body, { action: 'desk.kb-sections.create.dry-run' })
         return
