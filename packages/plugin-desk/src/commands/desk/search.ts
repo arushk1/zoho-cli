@@ -17,7 +17,7 @@ export default class DeskSearch extends DeskBaseCommand<typeof DeskSearch> {
     const { flags } = this
     try {
       const params: Record<string, string> = {
-        query: flags.query,
+        searchStr: flags.query,
         ...DeskBaseCommand.paginationParams(flags),
       }
       if (flags.module) params.module = flags.module

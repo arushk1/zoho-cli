@@ -21,10 +21,10 @@ export default class ProjectsEventsUpdate extends ProjectsBaseCommand<typeof Pro
     try {
       const eventData = JSON.parse(flags.data)
       if (flags['dry-run']) {
-        this.outputSuccess({ dryRun: true, method: 'PUT', path: await this.projectPath(flags.project, `/events/${args.id}`), body: eventData })
+        this.outputSuccess({ dryRun: true, method: 'PATCH', path: await this.projectPath(flags.project, `/events/${args.id}`), body: eventData })
         return
       }
-      const { data } = await this.apiClient.put(await this.projectPath(flags.project, `/events/${args.id}`), eventData)
+      const { data } = await this.apiClient.patch(await this.projectPath(flags.project, `/events/${args.id}`), eventData)
       this.outputSuccess(data.events?.[0] ?? data, { action: 'events.update' })
     } catch (error: any) {
       if (error instanceof SyntaxError) {

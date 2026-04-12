@@ -25,11 +25,11 @@ export default class ProjectsUpdate extends ProjectsBaseCommand<typeof ProjectsU
       const path = await this.portalPath(`/projects/${args.id}`)
 
       if (flags['dry-run']) {
-        this.outputSuccess({ dryRun: true, method: 'PUT', path, body })
+        this.outputSuccess({ dryRun: true, method: 'PATCH', path, body })
         return
       }
 
-      const { data } = await this.apiClient.put(path, body)
+      const { data } = await this.apiClient.patch(path, body)
 
       this.outputSuccess(data.projects?.[0] ?? data, {
         action: 'projects.update',

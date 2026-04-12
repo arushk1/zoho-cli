@@ -35,7 +35,7 @@ export default class ProjectsTimelogsUpdate extends ProjectsBaseCommand<typeof P
     }
 
     try {
-      const { data } = await this.apiClient.put(
+      const { data } = await this.apiClient.patch(
         await this.portalPath(`/timelogs/${args.id}`),
         body,
       )

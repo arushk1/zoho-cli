@@ -36,9 +36,9 @@ export default class ProjectsTimelogsList extends ProjectsBaseCommand<typeof Pro
       if (flags['bill-status']) params.bill_status = flags['bill-status']
       if (flags['component-type']) params.component_type = flags['component-type']
       if (flags['view-type']) params.view_type = flags['view-type']
-      // V3 API requires module as a JSON-encoded array query parameter
+      // V3 API expects module as a comma-separated string
       if (flags.module && flags.module.length > 0) {
-        params.module = JSON.stringify(flags.module)
+        params.module = flags.module.join(',')
       }
 
       const url = flags.project

@@ -37,7 +37,7 @@ export default class ProjectsIssuesUpdate extends ProjectsBaseCommand<typeof Pro
 
     try {
       // V3 API requires project-scoped path for issue update
-      const { data } = await this.apiClient.put(
+      const { data } = await this.apiClient.patch(
         await this.projectPath(flags.project, `/issues/${args.id}`),
         body,
       )

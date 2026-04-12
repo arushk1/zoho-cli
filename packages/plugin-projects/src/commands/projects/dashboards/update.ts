@@ -20,10 +20,10 @@ export default class ProjectsDashboardsUpdate extends ProjectsBaseCommand<typeof
     try {
       const dashboardData = JSON.parse(flags.data)
       if (flags['dry-run']) {
-        this.outputSuccess({ dryRun: true, method: 'PUT', path: await this.portalPath(`/dashboards/${args.id}`), body: dashboardData })
+        this.outputSuccess({ dryRun: true, method: 'PATCH', path: await this.portalPath(`/dashboards/${args.id}`), body: dashboardData })
         return
       }
-      const { data } = await this.apiClient.put(await this.portalPath(`/dashboards/${args.id}`), dashboardData)
+      const { data } = await this.apiClient.patch(await this.portalPath(`/dashboards/${args.id}`), dashboardData)
       this.outputSuccess(data.dashboards?.[0] ?? data, { action: 'dashboards.update' })
     } catch (error: any) {
       if (error instanceof SyntaxError) {

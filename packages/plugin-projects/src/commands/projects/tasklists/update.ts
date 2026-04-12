@@ -13,6 +13,7 @@ export default class ProjectsTasklistsUpdate extends ProjectsBaseCommand<typeof 
   }
 
   static flags = {
+    project: Flags.string({ description: 'Project ID (required by V3 API)', required: true, char: 'p' }),
     data: Flags.string({ description: 'JSON object with task list fields to update', required: true, char: 'd' }),
     'dry-run': Flags.boolean({ description: 'Show request without executing', default: false }),
   }
@@ -22,14 +23,14 @@ export default class ProjectsTasklistsUpdate extends ProjectsBaseCommand<typeof 
 
     try {
       const body = JSON.parse(flags.data)
-      const path = await this.portalPath(`/tasklists/${args.id}`)
+      const path = await this.projectPath(flags.project, `/tasklists/${args.id}`)
 
       if (flags['dry-run']) {
-        this.outputSuccess({ dryRun: true, method: 'PUT', path, body })
+        this.outputSuccess({ dryRun: true, method: 'PATCH', path, body })
         return
       }
 
-      const { data } = await this.apiClient.put(path, body)
+      const { data } = await this.apiClient.patch(path, body)
 
       this.outputSuccess(data.tasklists?.[0] ?? data, {
         action: 'tasklists.update',

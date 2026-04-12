@@ -36,7 +36,7 @@ export default class ProjectsPhasesUpdate extends ProjectsBaseCommand<typeof Pro
     }
 
     try {
-      const { data } = await this.apiClient.put(
+      const { data } = await this.apiClient.patch(
         await this.projectPath(flags.project, `/phases/${args.id}`),
         body,
       )

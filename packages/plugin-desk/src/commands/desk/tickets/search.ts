@@ -18,7 +18,7 @@ export default class DeskTicketsSearch extends DeskBaseCommand<typeof DeskTicket
     try {
       const params: Record<string, string> = {
         ...DeskBaseCommand.paginationParams(flags),
-        query: flags.query,
+        searchStr: flags.query,
       }
       if (flags.department) params.departmentId = flags.department
       if (flags['sort-by']) params.sortBy = flags['sort-by']

@@ -33,12 +33,13 @@ export default class ProjectsCommentsList extends ProjectsBaseCommand<typeof Pro
         await this.projectPath(flags.project, `/${flags['entity-type']}/${flags['entity-id']}/comments`),
         { params },
       )
-      this.outputSuccess(data.comments ?? data, {
+      const comments = data.comments ?? data.comment ?? data
+      this.outputSuccess(comments, {
         action: 'comments.list',
         page: flags.page,
         perPage: flags['per-page'],
         hasMore: data.page_info?.has_next_page ?? false,
-        count: data.comments?.length ?? 0,
+        count: Array.isArray(comments) ? comments.length : 0,
       })
     } catch (error: any) {
       this.handleApiError(error)

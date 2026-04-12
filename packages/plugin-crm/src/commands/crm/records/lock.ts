@@ -41,7 +41,8 @@ export default class CrmRecordsLock extends CrmBaseCommand<typeof CrmRecordsLock
         }
 
         case 'lock': {
-          const body = flags.data ? JSON.parse(flags.data) : {}
+          const lockData = flags.data ? JSON.parse(flags.data) : {}
+          const body = { data: [lockData] }
           const { data } = await this.apiClient.post(basePath, body)
 
           this.outputSuccess(data.data?.[0] ?? data, {

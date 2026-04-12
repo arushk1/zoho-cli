@@ -8,7 +8,7 @@ export default class ProjectsTimersList extends ProjectsBaseCommand<typeof Proje
   async run(): Promise<void> {
     try {
       const { data } = await this.apiClient.get(
-        await this.portalPath('/timers'),
+        await this.portalPath('/logs/timers'),
       )
 
       this.outputSuccess(data.timers ?? [], {

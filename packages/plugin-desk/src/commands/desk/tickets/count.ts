@@ -6,6 +6,7 @@ export default class DeskTicketsCount extends DeskBaseCommand<typeof DeskTickets
   static summary = 'Get ticket count grouped by status'
 
   static flags = {
+    'view-id': Flags.string({ description: 'View ID (required by Desk API)', required: true }),
     department: Flags.string({ description: 'Filter by department ID' }),
     status: Flags.string({ description: 'Filter by ticket status' }),
   }
@@ -13,7 +14,9 @@ export default class DeskTicketsCount extends DeskBaseCommand<typeof DeskTickets
   async run(): Promise<void> {
     const { flags } = this
     try {
-      const params: Record<string, string> = {}
+      const params: Record<string, string> = {
+        viewId: flags['view-id'],
+      }
       if (flags.department) params.departmentId = flags.department
       if (flags.status) params.status = flags.status
 

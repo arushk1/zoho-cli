@@ -11,6 +11,7 @@ export default class ProjectsTasklistsDelete extends ProjectsBaseCommand<typeof 
   }
 
   static flags = {
+    project: Flags.string({ description: 'Project ID (required by V3 API)', required: true, char: 'p' }),
     'dry-run': Flags.boolean({ description: 'Show request without executing', default: false }),
   }
 
@@ -18,7 +19,7 @@ export default class ProjectsTasklistsDelete extends ProjectsBaseCommand<typeof 
     const { args, flags } = this
 
     try {
-      const path = await this.portalPath(`/tasklists/${args.id}`)
+      const path = await this.projectPath(flags.project, `/tasklists/${args.id}`)
 
       if (flags['dry-run']) {
         this.outputSuccess({ dryRun: true, method: 'DELETE', path })

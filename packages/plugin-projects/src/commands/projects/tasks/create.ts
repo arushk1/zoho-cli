@@ -6,6 +6,7 @@ export default class ProjectsTasksCreate extends ProjectsBaseCommand<typeof Proj
   static summary = 'Create a new task in a project'
   static examples = [
     'zoho projects tasks create --project 12345 --data \'{"name":"New Task","priority":"high"}\'',
+    'zoho projects tasks create --project 12345 --data \'{"name":"New Task","owners_and_work":{"owners":[{"zpuid":"4000000002055"}]}}\'',
   ]
 
   static flags = {

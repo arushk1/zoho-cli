@@ -34,9 +34,9 @@ export default class ProjectsAttachmentsList extends ProjectsBaseCommand<typeof 
         await this.projectPath(flags.project, `/${flags['entity-type']}/${flags['entity-id']}/attachments`),
         { params },
       )
-      // V3 API returns attachment (singular) key
-      const attachments = data.attachments ?? data.attachment ?? data
-      this.outputSuccess(attachments, {
+      // V3 API may return under attachments, attachment, documents, or data key
+      const attachments = data.attachments ?? data.attachment ?? data.documents ?? data
+      this.outputSuccess(Array.isArray(attachments) ? attachments : data, {
         action: 'attachments.list',
         page: flags.page,
         perPage: flags['per-page'],

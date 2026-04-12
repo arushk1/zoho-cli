@@ -26,11 +26,11 @@ export default class ProjectsForumsUpdate extends ProjectsBaseCommand<typeof Pro
       const path = await this.projectPath(flags.project, `/forums/${args.id}`)
 
       if (flags['dry-run']) {
-        this.outputSuccess({ dryRun: true, method: 'PUT', path, body })
+        this.outputSuccess({ dryRun: true, method: 'PATCH', path, body })
         return
       }
 
-      const { data } = await this.apiClient.put(path, body)
+      const { data } = await this.apiClient.patch(path, body)
 
       this.outputSuccess(data.forums?.[0] ?? data, {
         action: 'forums.update',

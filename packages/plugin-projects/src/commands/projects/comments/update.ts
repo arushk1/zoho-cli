@@ -29,10 +29,10 @@ export default class ProjectsCommentsUpdate extends ProjectsBaseCommand<typeof P
       // V3 API requires project-scoped path for comments
       const path = await this.projectPath(flags.project, `/${flags['entity-type']}/${flags['entity-id']}/comments/${args.id}`)
       if (flags['dry-run']) {
-        this.outputSuccess({ dryRun: true, method: 'PUT', path, body: commentData })
+        this.outputSuccess({ dryRun: true, method: 'PATCH', path, body: commentData })
         return
       }
-      const { data } = await this.apiClient.put(path, commentData)
+      const { data } = await this.apiClient.patch(path, commentData)
       this.outputSuccess(data.comments?.[0] ?? data, { action: 'comments.update' })
     } catch (error: any) {
       if (error instanceof SyntaxError) {
