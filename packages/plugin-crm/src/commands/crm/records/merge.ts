@@ -6,7 +6,7 @@ export default class CrmRecordsMerge extends CrmBaseCommand<typeof CrmRecordsMer
   static summary = 'Merge duplicate records into a master record'
   static examples = [
     'zoho crm records merge Leads 5437280000000328001 --with 5437280000000328002,5437280000000328003',
-    'zoho crm records merge Leads 5437280000000328001 --with 5437280000000328002 -d \'[{"api_name":"Email","record_id":"5437280000000328002"}]\'',
+    'zoho crm records merge Leads 5437280000000328001 --with 5437280000000328002 -d \'{"master_record_fields":["Email"],"data":[{"id":"5437280000000328002","_fields":[]}]}\'',
   ]
 
   static args = {
@@ -16,7 +16,11 @@ export default class CrmRecordsMerge extends CrmBaseCommand<typeof CrmRecordsMer
 
   static flags = {
     with: Flags.string({ description: 'Comma-separated record IDs to merge into master', required: true }),
-    data: Flags.string({ description: 'JSON array of field-level merge choices (field_level_merge)', char: 'd' }),
+    data: Flags.string({
+      description:
+        'JSON override for the merge entry, e.g. {"master_record_fields":["Email"],"data":[{"id":"<srcId>","_fields":["Phone"]}]}',
+      char: 'd',
+    }),
     'dry-run': Flags.boolean({ description: 'Show request without executing', default: false }),
   }
 
@@ -24,18 +28,18 @@ export default class CrmRecordsMerge extends CrmBaseCommand<typeof CrmRecordsMer
     const { args, flags } = this
 
     try {
-      const mergeRecords = flags.with.split(',').map((id) => id.trim()).filter(Boolean)
+      const sourceIds = flags.with.split(',').map((id) => id.trim()).filter(Boolean)
       const mergeEntry: Record<string, unknown> = {
-        original_record_id: args.masterId,
-        merge_records: mergeRecords,
+        master_record_fields: [],
+        data: sourceIds.map((id) => ({ id, _fields: [] })),
       }
 
       if (flags.data) {
-        mergeEntry.field_level_merge = JSON.parse(flags.data)
+        Object.assign(mergeEntry, JSON.parse(flags.data))
       }
 
       const body = { merge: [mergeEntry] }
-      const path = `/${args.module}/actions/merge`
+      const path = `/${args.module}/${args.masterId}/actions/merge`
 
       if (flags['dry-run']) {
         this.outputSuccess({ dryRun: true, method: 'POST', path, body })
