@@ -4,7 +4,7 @@ CLI tool for managing Zoho applications (CRM, Books, Payroll, People). Built wit
 
 ## Architecture
 
-Monorepo with 5 packages:
+Monorepo with 6 plugin packages plus core and cli:
 
 - **`packages/core`** (`@zoho-cli/core`) — Shared library: config, OAuth2 auth, HTTP client, JSON output envelopes
 - **`packages/cli`** (`@zoho-cli/cli`) — oclif CLI entry point with `auth` and `config` commands
@@ -12,6 +12,7 @@ Monorepo with 5 packages:
 - **`packages/plugin-projects`** (`@zoho-cli/plugin-projects`) — oclif plugin with 87 Projects commands
 - **`packages/plugin-people`** (`@zoho-cli/plugin-people`) — oclif plugin with 100 People commands
 - **`packages/plugin-desk`** (`@zoho-cli/plugin-desk`) — oclif plugin with 151 Desk commands
+- **`packages/plugin-bookings`** (`@zoho-cli/plugin-bookings`) — oclif plugin with 29 Bookings commands
 
 ## Build & Test
 
@@ -22,7 +23,8 @@ pnpm --filter @zoho-cli/core test            # Test core only
 pnpm --filter @zoho-cli/cli test             # Test cli only
 pnpm --filter @zoho-cli/plugin-crm test      # Test CRM plugin only
 pnpm --filter @zoho-cli/plugin-projects test # Test Projects plugin only
-pnpm --filter @zoho-cli/plugin-people test   # Test People plugin only
+pnpm --filter @zoho-cli/plugin-people test      # Test People plugin only
+pnpm --filter @zoho-cli/plugin-bookings test   # Test Bookings plugin only
 ```
 
 Each package has two tsconfigs:
@@ -191,6 +193,46 @@ Key differences from other plugins:
 - Updates use `PATCH` method (via `deskPatch`)
 - Error format uses `errorCode` field (not `code`)
 
+### Adding a new Bookings command
+
+All Bookings commands extend `BookingsBaseCommand` from `packages/plugin-bookings/src/bookings-base-command.ts`. Pattern:
+
+```typescript
+import { Flags } from '@oclif/core'
+import { BookingsBaseCommand } from '../../../bookings-base-command.js'
+
+export default class BookingsExampleList extends BookingsBaseCommand<typeof BookingsExampleList> {
+  static id = 'bookings example list'
+  static summary = 'Description here'
+
+  static flags = {
+    staff: Flags.string({ description: 'Filter by staff ID' }),
+  }
+
+  async run(): Promise<void> {
+    try {
+      const workspace = await this.resolveWorkspaceId()
+      const params: Record<string, string | undefined> = { workspace_id: workspace }
+      if (this.flags.staff) params.staff_id = this.flags.staff
+      const result = await this.bookingsGet<any>('example', params)
+      const data = Array.isArray(result) ? result : (result?.data ?? result)
+      this.outputSuccess(data, { action: 'example.list' })
+    } catch (error: any) {
+      this.handleApiError(error)
+    }
+  }
+}
+```
+
+Key differences from other plugins:
+
+- Extends `BookingsBaseCommand` — provides `bookingsGet(action, params)` and `bookingsPostForm(action, fields)`. Both auto-prefix the path with `/json/` and unwrap the `{ response: { returnvalue, logMessage, status } }` envelope.
+- Workspace ID resolved from `--workspace` flag > `config.defaultBookingsWorkspace` > `ZOHO_BOOKINGS_WORKSPACE_ID` env var > API auto-detect.
+- Complex fields on POST (e.g. `customer_details`, `dataMap`, `staffMap`) are passed as plain JS objects/arrays in the `fields` argument — the base command serializes them as JSON strings inside `application/x-www-form-urlencoded`.
+- Use `bookingsDateTimeFlag` from `./date-format.js` for any date/time flag. It accepts ISO 8601 from users and sends `dd-MMM-yyyy HH:mm:ss` to Zoho. Pass `dateOnly: true` for date-only fields like `selected_date` or staff `dob`.
+- `[EXPERIMENTAL]`-prefixed commands target undocumented endpoints (service/staff update+delete, resource create/update/delete). These may break; document in summary text.
+- Appointment state transitions are split into three verbs (`complete`, `cancel`, `noshow`) all hitting `/updateappointment` with different `action` values.
+
 ### Adding a new CLI command
 
 CLI commands extend `BaseCommand` from `packages/cli/src/base-command.ts`. Same pattern but without CRM-specific features (no `apiClient`, no `moduleCache`).
@@ -336,6 +378,18 @@ packages/
       lms/                    — enroll, unenroll, categories
         courses/              — list, my, get, create, update, delete
       separation/             — add, list
+  plugin-bookings/src/
+    bookings-base-command.ts   — Bookings base with --workspace flag, bookingsGet/bookingsPostForm helpers, envelope unwrap, workspace resolution
+    date-format.ts             — ISO 8601 <-> dd-MMM-yyyy HH:mm:ss + bookingsDateTimeFlag builder
+    envelope.ts                — extractBookingsResult + BookingsApiError
+    form-encode.ts             — serializeBookingsForm (URLSearchParams, JSON-stringifies nested)
+    commands/bookings/
+      workspaces/              — list, get, create, update, delete
+      services/                — list, get, create, update*, delete*    (* experimental)
+      staff/                   — list, get, search, add, update*, delete*
+      resources/               — list, get, create*, update*, delete*
+      availability/            — slots
+      appointments/            — list, get, book, reschedule, complete, cancel, noshow
 ```
 
 ## Zoho API Details
@@ -370,6 +424,18 @@ packages/
 - Pagination: `from` (1-based offset) + `limit` (max 100), converted from `--page`/`--per-page` by base command
 - Rate limiting: Daily credit pool (4,000–25,000/day/org depending on plan)
 - Scope format: `Desk.{module}.{operation}` (e.g., `Desk.tickets.ALL`)
+
+### Bookings API
+- Base URL: `https://www.zohoapis.{domain}/bookings/v1/json/{action}` (action-style, not REST)
+- Single API version: v1
+- Single OAuth scope: `zohobookings.data.CREATE` (covers every operation)
+- All POST bodies: `application/x-www-form-urlencoded`; complex fields are JSON-stringified as single form values
+- Date-time format: `dd-MMM-yyyy HH:mm:ss` (e.g. `30-Apr-2026 14:30:00`); treated as workspace-local per Settings → General
+- Pagination: only `/fetchappointment` paginates (`page`, `per_page` ≤ 100; ≤ 60 with `need_customer_more_info=true`); `next_page_available` in response
+- Rate limits: daily per-user quota (250/1000/3000 by plan); no rate-limit response headers
+- Error envelope: `{ response: { logMessage: [...], status: !== "success" } }` — no formal error codes
+- No webhooks (Zoho Flow is the official integration path)
+- Workspace ID resolved from `--workspace` flag > `config.defaultBookingsWorkspace` > `ZOHO_BOOKINGS_WORKSPACE_ID` env > auto-detect first workspace
 
 ### Common
 - Region: India (.in) default, configurable via `zoho config set region <region>`
