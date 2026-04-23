@@ -54,6 +54,7 @@ export const configSchema = z.object({
   clientSecret: z.string().optional(),
   defaultOrg: z.string().optional(),
   defaultPortal: z.string().optional(),
+  defaultBookingsWorkspace: z.string().optional(),
   outputFormat: z.enum(['json']).default('json'),
 })
 
