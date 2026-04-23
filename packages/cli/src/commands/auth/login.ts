@@ -49,6 +49,8 @@ export default class AuthLogin extends BaseCommand<typeof AuthLogin> {
         'ZOHOPEOPLE.timetracker.ALL',
         'ZOHOPEOPLE.dashboard.ALL',
         'ZOHOPEOPLE.automation.ALL',
+        // Bookings
+        'zohobookings.data.CREATE',
         // Books
         'ZohoBooks.fullaccess.all',
         // Expense

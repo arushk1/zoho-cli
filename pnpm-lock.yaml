@@ -19,6 +19,9 @@ importers:
       '@zoho-cli/core':
         specifier: workspace:*
         version: link:../core
+      '@zoho-cli/plugin-bookings':
+        specifier: workspace:*
+        version: link:../plugin-bookings
       '@zoho-cli/plugin-books':
         specifier: workspace:*
         version: link:../plugin-books

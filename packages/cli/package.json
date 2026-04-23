@@ -18,6 +18,7 @@
     "@oclif/plugin-help": "^6.2.0",
     "@zoho-cli/core": "workspace:*",
     "@zoho-cli/plugin-books": "workspace:*",
+    "@zoho-cli/plugin-bookings": "workspace:*",
     "@zoho-cli/plugin-crm": "workspace:*",
     "@zoho-cli/plugin-projects": "workspace:*",
     "@zoho-cli/plugin-people": "workspace:*",
@@ -40,6 +41,7 @@
     "plugins": [
       "@oclif/plugin-help",
       "@zoho-cli/plugin-books",
+      "@zoho-cli/plugin-bookings",
       "@zoho-cli/plugin-crm",
       "@zoho-cli/plugin-projects",
       "@zoho-cli/plugin-people",
