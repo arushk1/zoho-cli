@@ -32,6 +32,11 @@ describe('crm bulk-write upload', () => {
     expect(CrmBulkWriteUpload.flags['dry-run'].default).toBe(false)
   })
 
+  it('has optional --org flag', () => {
+    expect(CrmBulkWriteUpload.flags.org).toBeDefined()
+    expect(CrmBulkWriteUpload.flags.org.required).toBeFalsy()
+  })
+
   it('inherits from CrmBaseCommand', () => {
     expect(Object.prototype.isPrototypeOf.call(CrmBaseCommand, CrmBulkWriteUpload)).toBe(true)
   })

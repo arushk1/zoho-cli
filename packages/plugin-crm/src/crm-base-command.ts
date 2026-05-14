@@ -52,31 +52,52 @@ export abstract class CrmBaseCommand<T extends typeof Command> extends Command {
     this.zohoConfig = await resolveConfig(undefined, process.env as Record<string, string>)
   }
 
+  protected buildApiClient(baseUrl?: string): ZohoApiClient {
+    return new ZohoApiClient({
+      region: this.zohoConfig.region,
+      app: 'crm',
+      version: (this.flags as any)['api-version'] ?? 'v7',
+      baseUrl,
+      getTokens: () => loadTokens(),
+      onTokenRefresh: async (accessToken, expiresAt) => {
+        const existing = await loadTokens()
+        if (existing) {
+          await saveTokens(undefined, { ...existing, accessToken, expiresAt })
+        }
+      },
+      refreshToken: async () => {
+        const tokens = await loadTokens()
+        if (!tokens) throw new Error('No tokens available for refresh')
+        return refreshAccessToken(this.zohoConfig.region, {
+          refreshToken: tokens.refreshToken,
+          clientId: this.zohoConfig.clientId!,
+          clientSecret: this.zohoConfig.clientSecret!,
+        })
+      },
+    })
+  }
+
   protected get apiClient(): ZohoApiClient {
     if (!this._apiClient) {
-      this._apiClient = new ZohoApiClient({
-        region: this.zohoConfig.region,
-        app: 'crm',
-        version: (this.flags as any)['api-version'] ?? 'v7',
-        getTokens: () => loadTokens(),
-        onTokenRefresh: async (accessToken, expiresAt) => {
-          const existing = await loadTokens()
-          if (existing) {
-            await saveTokens(undefined, { ...existing, accessToken, expiresAt })
-          }
-        },
-        refreshToken: async () => {
-          const tokens = await loadTokens()
-          if (!tokens) throw new Error('No tokens available for refresh')
-          return refreshAccessToken(this.zohoConfig.region, {
-            refreshToken: tokens.refreshToken,
-            clientId: this.zohoConfig.clientId!,
-            clientSecret: this.zohoConfig.clientSecret!,
-          })
-        },
-      })
+      this._apiClient = this.buildApiClient()
     }
     return this._apiClient
+  }
+
+  protected get uploadApiClient(): ZohoApiClient {
+    const version = (this.flags as any)['api-version'] ?? 'v7'
+    return this.buildApiClient(`https://upload.zoho.com/crm/${version}`)
+  }
+
+  protected async resolveCrmOrgId(explicitOrg?: string): Promise<string> {
+    if (explicitOrg) return explicitOrg
+    if (this.zohoConfig.defaultOrg) return this.zohoConfig.defaultOrg
+    const fromEnv = process.env.ZOHO_DEFAULT_ORG ?? process.env.ZOHO_CRM_ORG_ID
+    if (fromEnv) return fromEnv
+    const { data } = await this.apiClient.get<{ org: Array<{ zgid: string }> }>('/org')
+    const orgId = data.org?.[0]?.zgid
+    if (!orgId) throw new Error('Could not resolve CRM org ID (zgid) from /org')
+    return orgId
   }
 
   protected get moduleCache(): ModuleCache {
@@ -101,6 +122,74 @@ export abstract class CrmBaseCommand<T extends typeof Command> extends Command {
   protected outputError(code: string, message: string, zohoErrorCode?: string, details?: unknown): void {
     const envelope = formatError({ code, message, zohoErrorCode, details })
     this.log(formatOutput(envelope, (this.flags as any).pretty))
+  }
+
+  protected async runRecordCreate(
+    module: string,
+    payload: string | undefined,
+    dryRun: boolean,
+  ): Promise<void> {
+    if (!payload) {
+      this.outputError('MISSING_PAYLOAD', 'Provide --json (or --data) with the record fields')
+      this.exit(3)
+    }
+    try {
+      const recordData = JSON.parse(payload!)
+      const body = { data: [recordData] }
+      if (dryRun) {
+        this.outputSuccess({ dryRun: true, method: 'POST', path: `/${module}`, body })
+        return
+      }
+      const { data } = await this.apiClient.post(`/${module}`, body)
+      this.outputSuccess(data.data?.[0] ?? data, { module, action: 'create' })
+    } catch (error: any) {
+      if (error instanceof SyntaxError) {
+        this.outputError('INVALID_JSON', 'Invalid JSON in --json/--data flag')
+        this.exit(3)
+      }
+      this.handleApiError(error)
+    }
+  }
+
+  protected async runRecordUpdate(
+    module: string,
+    id: string,
+    payload: string | undefined,
+    dryRun: boolean,
+  ): Promise<void> {
+    if (!payload) {
+      this.outputError('MISSING_PAYLOAD', 'Provide --json (or --data) with the fields to update')
+      this.exit(3)
+    }
+    try {
+      const recordData = JSON.parse(payload!)
+      const body = { data: [{ id, ...recordData }] }
+      if (dryRun) {
+        this.outputSuccess({ dryRun: true, method: 'PUT', path: `/${module}`, body })
+        return
+      }
+      const { data } = await this.apiClient.put(`/${module}`, body)
+      this.outputSuccess(data.data?.[0] ?? data, { module, action: 'update' })
+    } catch (error: any) {
+      if (error instanceof SyntaxError) {
+        this.outputError('INVALID_JSON', 'Invalid JSON in --json/--data flag')
+        this.exit(3)
+      }
+      this.handleApiError(error)
+    }
+  }
+
+  protected async runRecordDelete(module: string, id: string, dryRun: boolean): Promise<void> {
+    try {
+      if (dryRun) {
+        this.outputSuccess({ dryRun: true, method: 'DELETE', path: `/${module}?ids=${id}` })
+        return
+      }
+      const { data } = await this.apiClient.delete(`/${module}`, { params: { ids: id } })
+      this.outputSuccess(data.data?.[0] ?? data, { module, action: 'delete' })
+    } catch (error: any) {
+      this.handleApiError(error)
+    }
   }
 
   protected handleApiError(error: any): void {

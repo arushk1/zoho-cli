@@ -48,6 +48,13 @@ describe('auth login', () => {
     expect(defaultScopes).toContain('ZOHOPEOPLE')
   })
 
+  it('default scopes include composite_requests, files, and notifications', () => {
+    const defaultScopes = (AuthLogin.flags.scopes as any).default as string
+    expect(defaultScopes).toContain('ZohoCRM.composite_requests.CUSTOM')
+    expect(defaultScopes).toContain('ZohoFiles.files.ALL')
+    expect(defaultScopes).toContain('ZohoCRM.notifications.ALL')
+  })
+
   it('has a description for the port flag', () => {
     expect((AuthLogin.flags.port as any).description).toBeDefined()
   })

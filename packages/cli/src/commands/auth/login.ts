@@ -22,6 +22,9 @@ export default class AuthLogin extends BaseCommand<typeof AuthLogin> {
         'ZohoCRM.users.ALL',
         'ZohoCRM.bulk.ALL',
         'ZohoCRM.coql.READ',
+        'ZohoCRM.composite_requests.CUSTOM',
+        'ZohoCRM.notifications.ALL',
+        'ZohoFiles.files.ALL',
         // Projects
         'ZohoProjects.portals.ALL',
         'ZohoProjects.projects.ALL',
