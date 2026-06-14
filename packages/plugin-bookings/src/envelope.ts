@@ -22,7 +22,26 @@ interface BookingsResponseEnvelope {
 export function extractBookingsResult(data: unknown): any {
   const envelope = data as BookingsResponseEnvelope
   const resp = envelope?.response
-  if (!resp || typeof resp !== 'object') return data
+  if (!resp || typeof resp !== 'object') {
+    // Some endpoints (notably fetchappointment) skip the { response: {...} }
+    // wrapper and return a bare body like { "status": "failure" } when they
+    // reject a request. Surface that as an error instead of letting it ride
+    // through as a successful empty result.
+    const bare = data as { status?: unknown; logMessage?: unknown; message?: unknown }
+    if (bare && typeof bare === 'object' && typeof bare.status === 'string' && bare.status.toLowerCase() === 'failure') {
+      const logs = Array.isArray(bare.logMessage)
+        ? (bare.logMessage as unknown[]).filter((m): m is string => typeof m === 'string')
+        : []
+      const message =
+        logs.length > 0
+          ? logs.join('; ')
+          : typeof bare.message === 'string'
+            ? bare.message
+            : 'Zoho Bookings rejected the request (status: failure) — a required parameter is likely missing or malformed.'
+      throw new BookingsApiError(message, 'API_ERROR')
+    }
+    return data
+  }
 
   const status = resp.status
   const logMessage = Array.isArray(resp.logMessage) ? (resp.logMessage as unknown[]) : []

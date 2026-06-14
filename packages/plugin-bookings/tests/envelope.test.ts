@@ -75,4 +75,20 @@ describe('extractBookingsResult', () => {
     const data = { raw: 'untouched' }
     expect(extractBookingsResult(data)).toEqual({ raw: 'untouched' })
   })
+
+  it('throws on a bare un-enveloped failure (e.g. fetchappointment)', () => {
+    expect(() => extractBookingsResult({ status: 'failure' })).toThrow(BookingsApiError)
+  })
+
+  it('uses top-level logMessage for bare failures when present', () => {
+    try {
+      extractBookingsResult({ status: 'failure', logMessage: ['bad param', 'try again'] })
+    } catch (e) {
+      expect((e as BookingsApiError).message).toBe('bad param; try again')
+    }
+  })
+
+  it('does not throw on a bare success body', () => {
+    expect(extractBookingsResult({ status: 'success', data: [] })).toEqual({ status: 'success', data: [] })
+  })
 })

@@ -35,7 +35,9 @@ export default class BookingsAppointmentsList extends BookingsBaseCommand<typeof
       const limit = flags['need-customer-more-info']
         ? Math.min(flags['per-page'], 60)
         : Math.min(flags['per-page'], 100)
-      const fields: Record<string, unknown> = {
+      const workspaceId = await this.resolveWorkspaceId()
+      const filters: Record<string, unknown> = {
+        workspace_id: workspaceId,
         service_id: flags.service,
         staff_id: flags.staff,
         resource_id: flags.resource,
@@ -51,7 +53,11 @@ export default class BookingsAppointmentsList extends BookingsBaseCommand<typeof
         appointment_created_from: flags['appointment-created-from'],
         appointment_created_till: flags['appointment-created-till'],
       }
-      const result = await this.bookingsPostForm<any>('fetchappointment', fields)
+      // fetchappointment requires every filter wrapped in a single `data` form
+      // field holding a JSON object — NOT flat key=value fields, which Zoho
+      // rejects with a bare {"status":"failure"}. serializeBookingsForm
+      // JSON-stringifies nested objects, and JSON.stringify drops undefined keys.
+      const result = await this.bookingsPostForm<any>('fetchappointment', { data: filters })
       const data = Array.isArray(result) ? result : (result?.data ?? result)
       const hasMore = Boolean(result?.next_page_available)
       this.outputSuccess(data, { action: 'appointments.list', page: flags.page, perPage: limit, hasMore })
