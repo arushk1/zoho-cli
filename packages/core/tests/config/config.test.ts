@@ -66,7 +66,7 @@ describe('Config', () => {
       expect(ACCOUNTS_DOMAINS.in).toBe('accounts.zoho.in')
       expect(ACCOUNTS_DOMAINS.au).toBe('accounts.zoho.com.au')
       expect(ACCOUNTS_DOMAINS.jp).toBe('accounts.zoho.jp')
-      expect(ACCOUNTS_DOMAINS.ca).toBe('accounts.zoho.ca')
+      expect(ACCOUNTS_DOMAINS.ca).toBe('accounts.zohocloud.ca')
     })
   })
 

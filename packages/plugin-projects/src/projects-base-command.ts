@@ -113,6 +113,7 @@ export abstract class ProjectsBaseCommand<T extends typeof Command> extends Comm
         app: 'projects',
         version: 'v3',
         baseUrl: `https://${domain}/api/v3`,
+        authScheme: 'Bearer',
         getTokens: () => loadTokens(),
         onTokenRefresh: async (accessToken, expiresAt) => {
           const existing = await loadTokens()

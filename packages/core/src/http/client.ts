@@ -8,6 +8,7 @@ export interface ZohoApiClientConfig {
   app: string
   version: string
   baseUrl?: string
+  authScheme?: 'Zoho-oauthtoken' | 'Bearer'
   getTokens: () => Promise<TokenData | null>
   onTokenRefresh: (newAccessToken: string, expiresAt: number) => Promise<void>
   refreshToken?: () => Promise<{ accessToken: string; expiresAt: number }>
@@ -30,18 +31,14 @@ export class ZohoApiClient {
     this.axios.interceptors.request.use(async (reqConfig) => {
       const tokens = await config.getTokens()
       if (tokens) {
-        reqConfig.headers.Authorization = `Zoho-oauthtoken ${tokens.accessToken}`
+        reqConfig.headers.Authorization = `${config.authScheme ?? 'Zoho-oauthtoken'} ${tokens.accessToken}`
       }
       return reqConfig
     })
   }
 
   private extractHeaders(response: AxiosResponse): void {
-    this.rateLimiter.updateFromHeaders({
-      'x-ratelimit-remaining': response.headers['x-ratelimit-remaining'],
-      'x-ratelimit-limit': response.headers['x-ratelimit-limit'],
-      'x-ratelimit-reset': response.headers['x-ratelimit-reset'],
-    })
+    this.rateLimiter.updateFromHeaders(response.headers as Record<string, string | number | string[] | undefined>)
   }
 
   private async request<T>(method: string, path: string, data?: unknown, config?: AxiosRequestConfig): Promise<{ data: T; headers: Record<string, string> }> {

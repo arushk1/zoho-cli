@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import axios from 'axios'
-import { ZohoApiClient } from '../../src/http/index.js'
+import { RateLimiter, ZohoApiClient } from '../../src/http/index.js'
 import type { TokenData } from '../../src/auth/index.js'
 
 vi.mock('axios')
@@ -80,5 +80,55 @@ describe('ZohoApiClient', () => {
     })
     const result = await client.post('/Leads', { data: [{ Last_Name: 'Test' }] })
     expect(result.data).toEqual({ data: [{ status: 'success' }] })
+  })
+
+  it('passes response headers through to the rate limiter', async () => {
+    const updateSpy = vi.spyOn(RateLimiter.prototype, 'updateFromHeaders')
+    mockAxiosInstance.get.mockResolvedValueOnce({
+      data: { projects: [] },
+      headers: { 'ratelimit-remaining': '0', 'retry-after': '540' },
+    })
+
+    const client = new ZohoApiClient({
+      region: 'in',
+      app: 'projects',
+      version: 'v3',
+      getTokens: async () => mockTokens,
+      onTokenRefresh: async () => {},
+    })
+
+    await client.get('/portal/123/projects')
+    expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ 'ratelimit-remaining': '0', 'retry-after': '540' })
+    )
+  })
+
+  it('uses Zoho-oauthtoken authorization by default', async () => {
+    new ZohoApiClient({
+      region: 'in',
+      app: 'crm',
+      version: 'v7',
+      getTokens: async () => mockTokens,
+      onTokenRefresh: async () => {},
+    })
+
+    const requestInterceptor = mockAxiosInstance.interceptors.request.use.mock.calls[0][0]
+    const requestConfig = await requestInterceptor({ headers: {} })
+    expect(requestConfig.headers.Authorization).toBe('Zoho-oauthtoken access-123')
+  })
+
+  it('supports Bearer authorization for APIs that require it', async () => {
+    new ZohoApiClient({
+      region: 'in',
+      app: 'projects',
+      version: 'v3',
+      authScheme: 'Bearer',
+      getTokens: async () => mockTokens,
+      onTokenRefresh: async () => {},
+    })
+
+    const requestInterceptor = mockAxiosInstance.interceptors.request.use.mock.calls[0][0]
+    const requestConfig = await requestInterceptor({ headers: {} })
+    expect(requestConfig.headers.Authorization).toBe('Bearer access-123')
   })
 })

@@ -48,6 +48,17 @@ describe('auth login', () => {
     expect(defaultScopes).toContain('ZOHOPEOPLE')
   })
 
+  it('default scopes include Desk modules used by the Desk commands', () => {
+    const defaultScopes = (AuthLogin.flags.scopes as any).default as string
+    expect(defaultScopes).toContain('Desk.tickets.ALL')
+    expect(defaultScopes).toContain('Desk.contacts.ALL')
+    expect(defaultScopes).toContain('Desk.tasks.ALL')
+    expect(defaultScopes).toContain('Desk.events.ALL')
+    expect(defaultScopes).toContain('Desk.articles.ALL')
+    expect(defaultScopes).toContain('Desk.basic.READ')
+    expect(defaultScopes).toContain('Desk.search.READ')
+  })
+
   it('default scopes include composite_requests, files, and notifications', () => {
     const defaultScopes = (AuthLogin.flags.scopes as any).default as string
     expect(defaultScopes).toContain('ZohoCRM.composite_requests.CUSTOM')
