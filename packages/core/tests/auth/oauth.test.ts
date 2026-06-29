@@ -88,7 +88,7 @@ describe('OAuth', () => {
         redirectUri: 'http://localhost:8901/callback',
         scopes: ['ZohoCRM.modules.ALL'],
       })
-      expect(url).toContain('accounts.zoho.ca/oauth/v2/auth')
+      expect(url).toContain('accounts.zohocloud.ca/oauth/v2/auth')
     })
 
     it('joins multiple scopes with comma', () => {

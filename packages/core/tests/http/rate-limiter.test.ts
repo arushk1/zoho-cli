@@ -25,4 +25,11 @@ describe('RateLimiter', () => {
     expect(delay).toBeGreaterThan(0)
     expect(delay).toBeLessThanOrEqual(6000)
   })
+
+  it('recognizes standard rate limit headers used by Zoho Projects', () => {
+    const limiter = new RateLimiter()
+    limiter.updateFromHeaders({ 'RateLimit-Remaining': '0', 'Retry-After': '540' })
+    expect(limiter.shouldWait()).toBe(true)
+    expect(limiter.getWaitMs()).toBe(541_000)
+  })
 })

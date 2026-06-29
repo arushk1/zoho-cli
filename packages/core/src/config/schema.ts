@@ -18,7 +18,7 @@ export const ACCOUNTS_DOMAINS: Record<ZohoRegion, string> = {
   in: 'accounts.zoho.in',
   au: 'accounts.zoho.com.au',
   jp: 'accounts.zoho.jp',
-  ca: 'accounts.zoho.ca',
+  ca: 'accounts.zohocloud.ca',
 }
 
 export const PROJECTS_REGION_DOMAINS: Record<ZohoRegion, string> = {
