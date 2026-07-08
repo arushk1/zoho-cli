@@ -34,6 +34,23 @@ cd packages/cli && pnpm link --global
 ./packages/cli/bin/run.js --help
 ```
 
+## Agent Skill
+
+This repository ships a bundled agent skill at [`skills/zoho-cli`](./skills/zoho-cli). Agent runtimes that discover repo-local skills can invoke `$zoho-cli` for Zoho command examples, JSON-output rules, product-specific gotchas, and local development guidance.
+
+The skill includes:
+
+- [`SKILL.md`](./skills/zoho-cli/SKILL.md) for trigger and workflow guidance
+- [`agents/openai.yaml`](./skills/zoho-cli/agents/openai.yaml) for UI metadata
+- [`references/commands.md`](./skills/zoho-cli/references/commands.md) for the command catalog
+
+For agent runtimes that only load global skills, install it from the checkout:
+
+```bash
+mkdir -p ~/.agents/skills
+ln -s "$(pwd)/skills/zoho-cli" ~/.agents/skills/zoho-cli
+```
+
 ## Setup
 
 ### 1. Create a Zoho OAuth Client
