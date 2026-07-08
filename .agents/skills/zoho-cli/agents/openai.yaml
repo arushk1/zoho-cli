@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zoho CLI"
+  short_description: "Use the Zoho CLI across Zoho apps"
+  default_prompt: "Use $zoho-cli to list my open Desk tickets as JSON."
