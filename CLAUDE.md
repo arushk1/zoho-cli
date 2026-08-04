@@ -33,6 +33,8 @@ Each package has two tsconfigs:
 
 Build scripts use `tsc -p tsconfig.build.json`. Build order matters: core first, then plugins (crm, projects, people in parallel), then cli.
 
+CI runs `pnpm build && pnpm test` on every push and PR, and `.github/workflows/claude-issue.yml` auto-triages every new GitHub issue — fixing and opening a PR when the bug is provable without live Zoho credentials, otherwise commenting its triage and applying `needs-human`. Never add real Zoho credentials to CI; tests use fixtures and mocks only.
+
 ## Code Conventions
 
 ### Adding a new CRM command
