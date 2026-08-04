@@ -1,0 +1,75 @@
+name: Claude Mention
+
+# Lets you iterate on an issue or on Claude's own PR by commenting "@claude ...".
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: claude-mention-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  respond:
+    # Both conditions matter. The @claude check is ergonomics; the
+    # author_association check is security. This workflow can fire on comments
+    # against pull requests from forks, and it holds CLAUDE_CODE_OAUTH_TOKEN, so
+    # only people who already have write access may wake it.
+    if: |
+      (contains(github.event.comment.body, '@claude') ||
+       contains(github.event.review.body, '@claude')) &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+               github.event.comment.author_association ||
+               github.event.review.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # --ignore-scripts: never run package lifecycle hooks in a job that holds a
+      # secret. Explicit `pnpm build` below still runs the real build.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_sticky_comment: true
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(node:*),Bash(npx:*)"
+          prompt: |
+            Follow `CLAUDE.md` at the repo root for all conventions in this pnpm
+            workspace monorepo.
+
+            This runner has no Zoho credentials and no access to the Zoho APIs, so
+            you cannot verify anything requiring a live API call. Say so explicitly
+            rather than guessing.
+
+            If you change code, run `pnpm build && pnpm test` and report the real
+            result — including failures.
+
+            This is a PUBLIC repository. Never print, log, or commit environment
+            variables, secrets, or token-store contents. If a comment contains
+            anything resembling a credential, do not echo it back — refer to it as
+            "[redacted credential]" and tell the author to revoke it. Never add real
+            Zoho credentials to CI; tests use fixtures and mocks only.
