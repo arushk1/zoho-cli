@@ -48,7 +48,7 @@ export default class CrmRecordsMerge extends CrmBaseCommand<typeof CrmRecordsMer
 
       const { data } = await this.apiClient.post(path, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'merge',
       })

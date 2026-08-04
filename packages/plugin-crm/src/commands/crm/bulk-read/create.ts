@@ -42,7 +42,7 @@ export default class CrmBulkReadCreate extends CrmBaseCommand<typeof CrmBulkRead
 
       const { data } = await this.apiClient.post('/read', { query })
 
-      this.outputSuccess(data.data ?? data, {
+      this.outputRecordResult(data.data ?? data, {
         module: flags.module,
         action: 'bulk-read-create',
       })

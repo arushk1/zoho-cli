@@ -77,7 +77,7 @@ export default class CrmRecordsShare extends CrmBaseCommand<typeof CrmRecordsSha
 
           const { data } = await this.apiClient.delete(`${basePath}/${flags['share-id']}`)
 
-          this.outputSuccess(data.data?.[0] ?? data, {
+          this.outputRecordResult(data.data?.[0] ?? data, {
             module: args.module,
             action: 'share-revoke',
           })

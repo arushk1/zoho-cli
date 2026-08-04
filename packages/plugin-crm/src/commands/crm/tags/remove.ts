@@ -35,7 +35,7 @@ export default class CrmTagsRemove extends CrmBaseCommand<typeof CrmTagsRemove> 
         body,
       )
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'remove_tags',
       })

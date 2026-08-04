@@ -34,7 +34,7 @@ export default class CrmRecordsChangeOwner extends CrmBaseCommand<typeof CrmReco
         body,
       )
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'change-owner',
       })

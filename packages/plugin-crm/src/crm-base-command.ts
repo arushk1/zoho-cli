@@ -7,6 +7,8 @@ import {
   formatOutput,
   formatError,
   formatSuccess,
+  mapZohoError,
+  collectZohoRecordErrors,
   ZohoApiClient,
   type ZohoConfig,
   type SuccessMeta,
@@ -124,6 +126,34 @@ export abstract class CrmBaseCommand<T extends typeof Command> extends Command {
     this.log(formatOutput(envelope, (this.flags as any).pretty))
   }
 
+  /**
+   * Emits the result of a write operation.
+   *
+   * Zoho answers HTTP 200 even when it rejects a record, so a plain outputSuccess
+   * would report `"success": true` and exit 0 on a record that was never written.
+   * This converts a per-record rejection into an error envelope and a non-zero
+   * exit; accepted records fall through to outputSuccess unchanged.
+   */
+  protected outputRecordResult(payload: unknown, meta?: SuccessMeta): void {
+    const failures = collectZohoRecordErrors(payload)
+    if (failures.length === 0) {
+      this.outputSuccess(payload, meta)
+      return
+    }
+    const primary = mapZohoError(failures[0])
+    // On a bulk write, some records may have been accepted. Always report the
+    // ratio so a partial failure is not mistaken for a total one, and hand back
+    // every rejected record rather than just the first.
+    const bulk = Array.isArray(payload)
+    this.outputError(
+      primary.code,
+      bulk ? `${primary.message} (${failures.length} of ${payload.length} records rejected)` : primary.message,
+      primary.zohoErrorCode,
+      bulk ? failures : primary.details,
+    )
+    this.exit(1)
+  }
+
   protected async runRecordCreate(
     module: string,
     payload: string | undefined,
@@ -141,7 +171,7 @@ export abstract class CrmBaseCommand<T extends typeof Command> extends Command {
         return
       }
       const { data } = await this.apiClient.post(`/${module}`, body)
-      this.outputSuccess(data.data?.[0] ?? data, { module, action: 'create' })
+      this.outputRecordResult(data.data?.[0] ?? data, { module, action: 'create' })
     } catch (error: any) {
       if (error instanceof SyntaxError) {
         this.outputError('INVALID_JSON', 'Invalid JSON in --json/--data flag')
@@ -169,7 +199,7 @@ export abstract class CrmBaseCommand<T extends typeof Command> extends Command {
         return
       }
       const { data } = await this.apiClient.put(`/${module}`, body)
-      this.outputSuccess(data.data?.[0] ?? data, { module, action: 'update' })
+      this.outputRecordResult(data.data?.[0] ?? data, { module, action: 'update' })
     } catch (error: any) {
       if (error instanceof SyntaxError) {
         this.outputError('INVALID_JSON', 'Invalid JSON in --json/--data flag')
@@ -186,7 +216,7 @@ export abstract class CrmBaseCommand<T extends typeof Command> extends Command {
         return
       }
       const { data } = await this.apiClient.delete(`/${module}`, { params: { ids: id } })
-      this.outputSuccess(data.data?.[0] ?? data, { module, action: 'delete' })
+      this.outputRecordResult(data.data?.[0] ?? data, { module, action: 'delete' })
     } catch (error: any) {
       this.handleApiError(error)
     }

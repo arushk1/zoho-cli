@@ -38,7 +38,7 @@ export default class CrmNotesCreate extends CrmBaseCommand<typeof CrmNotesCreate
 
       const { data } = await this.apiClient.post(`/${args.module}/${args.id}/Notes`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'create',
       })

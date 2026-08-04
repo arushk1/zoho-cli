@@ -30,7 +30,7 @@ export default class CrmRecordsUpdate extends CrmBaseCommand<typeof CrmRecordsUp
 
       const { data } = await this.apiClient.put(`/${args.module}`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'update',
       })

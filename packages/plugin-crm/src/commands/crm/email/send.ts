@@ -32,7 +32,7 @@ export default class CrmEmailSend extends CrmBaseCommand<typeof CrmEmailSend> {
 
       const { data } = await this.apiClient.post(`/${args.module}/${args.id}/actions/send_mail`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'email.send',
       })

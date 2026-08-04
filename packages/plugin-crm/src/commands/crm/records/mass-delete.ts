@@ -41,7 +41,7 @@ export default class CrmRecordsMassDelete extends CrmBaseCommand<typeof CrmRecor
         body,
       )
 
-      this.outputSuccess(data.data ?? data, {
+      this.outputRecordResult(data.data ?? data, {
         module: args.module,
         action: 'mass-delete',
         count: ids.length,

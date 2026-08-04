@@ -16,7 +16,7 @@ export default class CrmNotesDelete extends CrmBaseCommand<typeof CrmNotesDelete
     try {
       const { data } = await this.apiClient.delete(`/Notes/${args.id}`)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         action: 'delete',
       })
     } catch (error: any) {

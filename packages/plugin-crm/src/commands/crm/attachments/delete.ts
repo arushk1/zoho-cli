@@ -22,7 +22,7 @@ export default class CrmAttachmentsDelete extends CrmBaseCommand<typeof CrmAttac
         `/${args.module}/${args.recordId}/Attachments/${args.attachmentId}`,
       )
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'delete',
       })

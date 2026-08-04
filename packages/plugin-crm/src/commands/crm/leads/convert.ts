@@ -37,7 +37,7 @@ export default class CrmLeadsConvert extends CrmBaseCommand<typeof CrmLeadsConve
 
       const { data } = await this.apiClient.post(`/Leads/${args.id}/actions/convert`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: 'Leads',
         action: 'convert',
       })

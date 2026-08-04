@@ -45,7 +45,7 @@ export default class CrmRecordsLock extends CrmBaseCommand<typeof CrmRecordsLock
           const body = { data: [lockData] }
           const { data } = await this.apiClient.post(basePath, body)
 
-          this.outputSuccess(data.data?.[0] ?? data, {
+          this.outputRecordResult(data.data?.[0] ?? data, {
             module: args.module,
             action: 'lock',
           })
@@ -60,7 +60,7 @@ export default class CrmRecordsLock extends CrmBaseCommand<typeof CrmRecordsLock
 
           const { data } = await this.apiClient.delete(`${basePath}/${flags['lock-id']}`)
 
-          this.outputSuccess(data.data?.[0] ?? data, {
+          this.outputRecordResult(data.data?.[0] ?? data, {
             module: args.module,
             action: 'unlock',
           })

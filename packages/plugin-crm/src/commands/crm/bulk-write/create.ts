@@ -42,7 +42,7 @@ export default class CrmBulkWriteCreate extends CrmBaseCommand<typeof CrmBulkWri
 
       const { data } = await this.apiClient.post('/write', body)
 
-      this.outputSuccess(data.data ?? data, {
+      this.outputRecordResult(data.data ?? data, {
         module: flags.module,
         action: 'bulk-write-create',
       })

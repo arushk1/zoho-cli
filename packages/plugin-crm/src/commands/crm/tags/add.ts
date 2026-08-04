@@ -35,7 +35,7 @@ export default class CrmTagsAdd extends CrmBaseCommand<typeof CrmTagsAdd> {
         body,
       )
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'add_tags',
       })

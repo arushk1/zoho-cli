@@ -38,7 +38,7 @@ export default class CrmNotesUpdate extends CrmBaseCommand<typeof CrmNotesUpdate
 
       const { data } = await this.apiClient.put(`/Notes/${args.id}`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         action: 'update',
       })
     } catch (error: any) {

@@ -42,7 +42,7 @@ export default class CrmRecordsBlueprint extends CrmBaseCommand<typeof CrmRecord
       const body = JSON.parse(flags.data!)
       const { data } = await this.apiClient.put(`/${args.module}/${args.id}/actions/blueprint`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'blueprint-update',
       })

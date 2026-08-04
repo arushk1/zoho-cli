@@ -40,7 +40,7 @@ export default class CrmAttachmentsUpload extends CrmBaseCommand<typeof CrmAttac
         },
       )
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'upload',
       })

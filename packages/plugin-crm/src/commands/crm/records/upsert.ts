@@ -34,7 +34,7 @@ export default class CrmRecordsUpsert extends CrmBaseCommand<typeof CrmRecordsUp
 
       const { data } = await this.apiClient.post(`/${args.module}/upsert`, body)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'upsert',
       })

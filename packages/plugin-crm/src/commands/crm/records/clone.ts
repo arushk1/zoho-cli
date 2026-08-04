@@ -26,7 +26,7 @@ export default class CrmRecordsClone extends CrmBaseCommand<typeof CrmRecordsClo
 
       const { data } = await this.apiClient.post(`/${args.module}/${args.id}/actions/clone`)
 
-      this.outputSuccess(data.data?.[0] ?? data, {
+      this.outputRecordResult(data.data?.[0] ?? data, {
         module: args.module,
         action: 'clone',
       })
