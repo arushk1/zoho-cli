@@ -149,6 +149,8 @@ export abstract class BillingBaseCommand<T extends typeof Command> extends Comma
   }
 
   protected handleApiError(error: any): never {
+    // Re-throw oclif exit signals to avoid double-output
+    if (error.oclif?.exit !== undefined) throw error
     if (error.response?.data) {
       const respData = error.response.data
       this.outputError(

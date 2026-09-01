@@ -156,6 +156,8 @@ export abstract class ProjectsBaseCommand<T extends typeof Command> extends Comm
   }
 
   protected handleApiError(error: any): void {
+    // Re-throw oclif exit signals to avoid double-output
+    if (error.oclif?.exit !== undefined) throw error
     if (error.response?.data) {
       const zohoError = error.response.data.error ?? error.response.data
       // V3 API uses title/status_code as the error code and details[] for messages

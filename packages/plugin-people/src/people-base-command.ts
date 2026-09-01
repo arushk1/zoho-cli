@@ -198,6 +198,9 @@ export abstract class PeopleBaseCommand<T extends typeof Command> extends Comman
   }
 
   protected handleApiError(error: any): never {
+    // Re-throw oclif exit signals to avoid double-output
+    if (error.oclif?.exit !== undefined) throw error
+
     // Handle errors thrown by extractResult (Zoho People API error envelope)
     if (error.isPeopleApiError) {
       this.outputError(error.code ?? 'API_ERROR', error.message, error.zohoErrorCode)
