@@ -141,11 +141,27 @@ export abstract class PeopleBaseCommand<T extends typeof Command> extends Comman
    * Throws a structured ZohoApiError when the response indicates failure.
    */
   protected extractResult(data: any): any {
+    if (process.env.ZOHO_DEBUG) {
+      console.error('[ZOHO_DEBUG] raw response:', JSON.stringify(data))
+    }
     // Check for error response (status === 1) before extracting result
     if (data?.response?.status === 1) {
       const errors = data.response.errors
-      const errCode = errors?.code ?? 'API_ERROR'
-      const errMessage = errors?.message ?? data.response.message ?? 'Error occurred'
+      // errors can be a single {code, message} object or an array of them;
+      // message itself can be a per-field object — normalize everything to a readable string
+      const first = Array.isArray(errors) ? errors[0] : errors
+      const errCode = first?.code ?? 'API_ERROR'
+      let errMessage: any
+      if (Array.isArray(errors)) {
+        errMessage = errors
+          .map((e: any) => (typeof e?.message === 'object' ? JSON.stringify(e.message) : e?.message))
+          .filter(Boolean)
+          .join('; ')
+      } else {
+        errMessage = errors?.message ?? data.response.message ?? 'Error occurred'
+        if (typeof errMessage === 'object') errMessage = JSON.stringify(errMessage)
+      }
+      if (!errMessage) errMessage = data.response.message ?? 'Error occurred'
       const err: any = new Error(errMessage)
       err.isPeopleApiError = true
       err.code = String(errCode)
