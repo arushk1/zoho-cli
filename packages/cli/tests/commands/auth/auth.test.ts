@@ -66,6 +66,22 @@ describe('auth login', () => {
     expect(defaultScopes).toContain('ZohoCRM.notifications.ALL')
   })
 
+  it('default scopes include Billing (legacy Subscriptions prefix)', () => {
+    const defaultScopes = (AuthLogin.flags.scopes as any).default as string
+    expect(defaultScopes).toContain('ZohoSubscriptions.fullaccess.all')
+  })
+
+  it('does not include ZohoPay scopes by default (they need the org-scoped consent endpoint)', () => {
+    const defaultScopes = (AuthLogin.flags.scopes as any).default as string
+    expect(defaultScopes).not.toContain('ZohoPay')
+  })
+
+  it('defines a payments-account flag and ZohoPay scope list for org-scoped login', () => {
+    expect(AuthLogin.flags['payments-account']).toBeDefined()
+    expect(AuthLogin.PAYMENTS_SCOPES).toContain('ZohoPay.payments.READ')
+    expect(AuthLogin.PAYMENTS_SCOPES).toContain('ZohoPay.refunds.CREATE')
+  })
+
   it('has a description for the port flag', () => {
     expect((AuthLogin.flags.port as any).description).toBeDefined()
   })

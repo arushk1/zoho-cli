@@ -1,10 +1,10 @@
 # Zoho CLI
 
-CLI tool for managing Zoho applications (CRM, Books, Payroll, People). Built with TypeScript, oclif v4, and pnpm workspaces. Designed for LLM/Claude consumption with JSON-only output.
+CLI tool for managing Zoho applications (CRM, Books, Billing, Payments, People, and more). Built with TypeScript, oclif v4, and pnpm workspaces. Designed for LLM/Claude consumption with JSON-only output.
 
 ## Architecture
 
-Monorepo with 6 plugin packages plus core and cli:
+Monorepo with 9 plugin packages plus core and cli:
 
 - **`packages/core`** (`@zoho-cli/core`) — Shared library: config, OAuth2 auth, HTTP client, JSON output envelopes
 - **`packages/cli`** (`@zoho-cli/cli`) — oclif CLI entry point with `auth` and `config` commands
@@ -13,6 +13,10 @@ Monorepo with 6 plugin packages plus core and cli:
 - **`packages/plugin-people`** (`@zoho-cli/plugin-people`) — oclif plugin with 100 People commands
 - **`packages/plugin-desk`** (`@zoho-cli/plugin-desk`) — oclif plugin with 151 Desk commands
 - **`packages/plugin-bookings`** (`@zoho-cli/plugin-bookings`) — oclif plugin with 29 Bookings commands
+- **`packages/plugin-books`** (`@zoho-cli/plugin-books`) — oclif plugin with 167 Books commands
+- **`packages/plugin-expense`** (`@zoho-cli/plugin-expense`) — oclif plugin with 73 Expense commands
+- **`packages/plugin-billing`** (`@zoho-cli/plugin-billing`) — oclif plugin with 44 Billing commands
+- **`packages/plugin-payments`** (`@zoho-cli/plugin-payments`) — oclif plugin with 18 Payments commands
 
 ## Build & Test
 
@@ -25,6 +29,8 @@ pnpm --filter @zoho-cli/plugin-crm test      # Test CRM plugin only
 pnpm --filter @zoho-cli/plugin-projects test # Test Projects plugin only
 pnpm --filter @zoho-cli/plugin-people test      # Test People plugin only
 pnpm --filter @zoho-cli/plugin-bookings test   # Test Bookings plugin only
+pnpm --filter @zoho-cli/plugin-billing test    # Test Billing plugin only
+pnpm --filter @zoho-cli/plugin-payments test   # Test Payments plugin only
 ```
 
 Each package has two tsconfigs:
@@ -235,6 +241,52 @@ Key differences from other plugins:
 - `[EXPERIMENTAL]`-prefixed commands target undocumented endpoints (service/staff update+delete, resource create/update/delete). These may break; document in summary text.
 - Appointment state transitions are split into three verbs (`complete`, `cancel`, `noshow`) all hitting `/updateappointment` with different `action` values.
 
+### Adding a new Books / Expense / Billing command
+
+These three plugins share the same shape: a base command with typed HTTP helpers that inject the org context, `{ code, message }` error envelopes, and `page`/`per_page` + `page_context.has_more_page` pagination.
+
+- **Books** commands extend `BooksBaseCommand` (`packages/plugin-books/src/books-base-command.ts`): helpers `booksGet/Post/Put/Delete` append the org as the `organization_id` **query param**. Org resolved from `--org` flag > `config.defaultOrg` > `ZOHO_ORG_ID` env > auto-detect via `GET /organizations`.
+- **Expense** commands extend `ExpenseBaseCommand` (`packages/plugin-expense/src/expense-base-command.ts`) with the same pattern.
+- **Billing** commands extend `BillingBaseCommand` (`packages/plugin-billing/src/billing-base-command.ts`): helpers `billingGet/Post/Put/Delete` send the org as the `X-com-zoho-subscriptions-organizationid` **header** (legacy Subscriptions name). Org resolved from `--org` flag > `config.defaultBillingOrg` > `ZOHO_BILLING_ORG_ID` env > auto-detect via `GET /organizations`. Plans/addons/coupons are keyed by `plan_code`/`addon_code`/`coupon_code` (not numeric IDs). `billing raw get` is a read-only passthrough for unwrapped endpoints.
+
+Write operations take `--data`/`-d` (JSON string) and support `--dry-run`. Success payloads unwrap the resource key (e.g. `data.invoice ?? data`).
+
+### Adding a new Payments command
+
+All Payments commands extend `PaymentsBaseCommand` from `packages/plugin-payments/src/payments-base-command.ts`.
+
+```typescript
+import { Flags } from '@oclif/core'
+import { PaymentsBaseCommand } from '../../payments-base-command.js'
+
+export default class PayExampleList extends PaymentsBaseCommand<typeof PayExampleList> {
+  static id = 'payments example list'
+  static summary = 'Description here'
+
+  static flags = {
+    page: Flags.integer({ description: 'Page number', default: 1 }),
+    'per-page': Flags.integer({ description: 'Results per page (max 200)', default: 25 }),
+  }
+
+  async run(): Promise<void> {
+    const { flags } = this
+    try {
+      const data = await this.paymentsGet('/example', { page: String(flags.page), per_page: String(flags['per-page']) })
+      this.outputSuccess(data.examples ?? [], { action: 'payments.example.list' })
+    } catch (error: any) {
+      this.handleApiError(error)
+    }
+  }
+}
+```
+
+Key differences from other plugins:
+- Helpers `paymentsGet/Post/Put` inject the mandatory `account_id` query param on every request
+- Account ID resolved from `--account` flag > `config.defaultPaymentsAccount` > `ZOHO_PAYMENTS_ACCOUNT_ID` env var — **no auto-detect exists**; commands hard-fail with `ACCOUNT_MISSING` (exit 3) if unset
+- Region-limited: hosts come from `PAYMENTS_REGION_DOMAINS` (only `in` → `payments.zoho.in`, `us` → `payments.zoho.com`); other regions fail with `REGION_UNSUPPORTED` (exit 3)
+- Zoho documents no list endpoints for refunds, payment links, customers, or mandates — `payments raw get` covers those gaps
+- Payment-link cancel/update use `PUT` (not POST); refund create is nested (`POST /payments/{payment_id}/refunds`) while refund get is top-level (`GET /refunds/{refund_id}`)
+
 ### Adding a new CLI command
 
 CLI commands extend `BaseCommand` from `packages/cli/src/base-command.ts`. Same pattern but without CRM-specific features (no `apiClient`, no `moduleCache`).
@@ -392,6 +444,37 @@ packages/
       resources/               — list, get, create*, update*, delete*
       availability/            — slots
       appointments/            — list, get, book, reschedule, complete, cancel, noshow
+  plugin-books/src/
+    books-base-command.ts      — Books base with --org flag, booksGet/Post/Put/Delete helpers (org as organization_id query param), org auto-detect
+    commands/books/            — organizations, contacts, contact-persons, invoices, estimates, sales-orders, purchase-orders, bills, credit-notes, vendor-credits, customer-payments, vendor-payments, expenses, items, chart-of-accounts, bank-accounts, journals, currencies, taxes, projects, time-entries, users, recurring-invoices, recurring-bills, raw
+  plugin-expense/src/
+    expense-base-command.ts    — Expense base, same shape as Books
+    commands/expense/          — reports, expenses, trips, advances, users, ...
+  plugin-billing/src/
+    billing-base-command.ts    — Billing base with --org flag, billingGet/Post/Put/Delete helpers (org as X-com-zoho-subscriptions-organizationid header), org auto-detect
+    commands/billing/
+      organizations/           — list
+      customers/               — list, get, create, update, delete
+      plans/                   — list, get, create, update, delete (keyed by plan_code)
+      addons/                  — list, get, create, update, delete (keyed by addon_code)
+      coupons/                 — list, get, create, update, delete (keyed by coupon_code)
+      subscriptions/           — list, get, create, update, cancel (--at-end), reactivate
+      invoices/                — list, get, void, send, write-off
+      payments/                — list, get, create, update, delete
+      credit-notes/            — get, create, void, apply (no list endpoint documented)
+      hosted-pages/            — list, get
+      raw/                     — get (read-only passthrough)
+  plugin-payments/src/
+    payments-base-command.ts   — Payments base with --account flag, paymentsGet/Post/Put helpers (mandatory account_id param), in/us-only host map
+    commands/payments/
+      list.ts, get.ts          — payments list/get (top-level)
+      refunds/                 — create (nested under payment), get
+      payment-links/           — create, get, update, cancel
+      customers/               — create, get
+      payouts/                 — list, get
+      mandates/                — get, notify, execute
+      sessions/                — create, get
+      raw/                     — get (read-only passthrough)
 ```
 
 ## Zoho API Details
@@ -439,15 +522,35 @@ packages/
 - No webhooks (Zoho Flow is the official integration path)
 - Workspace ID resolved from `--workspace` flag > `config.defaultBookingsWorkspace` > `ZOHO_BOOKINGS_WORKSPACE_ID` env > auto-detect first workspace
 
+### Billing API
+- Base URL: `https://www.zohoapis.{domain}/billing/v1` (formerly Zoho Subscriptions; docs migrated from `subscriptions/v1`)
+- Single API version: v1
+- Required header: `X-com-zoho-subscriptions-organizationid` on every request (legacy name retained; header, unlike Books' query param)
+- Pagination: `page`/`per_page` params, response includes `page_context.has_more_page`
+- Rate limiting: 100 req/min/org, plan-based daily cap (~1k–5k/day), no rate-limit response headers
+- Scope format: `ZohoSubscriptions.{resource}.{operation}` — the prefix is still `ZohoSubscriptions`, not `ZohoBilling`; default login uses `ZohoSubscriptions.fullaccess.all`
+- Error envelope: `{ code, message }` with `code: 0` = success
+
+### Payments API
+- Base URL: `https://payments.zoho.{in|com}/api/v1` — dedicated host, NOT on `zohoapis.*`; only India and US regions exist
+- Single API version: v1
+- Mandatory `account_id` query param on every request (from Payments dashboard → Settings → Account Details); no auto-detect endpoint
+- OAuth divergence: consent uses the org-scoped endpoint `accounts.zoho.{dc}/oauth/v2/org/auth` with `soid=zohopay.{account_id}` — run `zoho auth login --payments-account <id>` to mint tokens that include `ZohoPay.*` scopes (token/refresh endpoints are standard)
+- Scope format: `ZohoPay.{module}.{operation}` (e.g. `ZohoPay.payments.READ`); sandbox uses `ZohoPaySandbox.*` + `soid=zohopaysandbox.{account_id}` (not yet wired into the CLI)
+- Pagination: `page`/`per_page` (default 25, max 200); no `has_more_page` indicator documented
+- Rate limiting: 600 req/min (payments/customers), 60 req/min (refunds); no rate-limit response headers
+- Card capture is a browser-widget flow — the CLI surface is payments, refunds, payment links, customers, payouts, mandates, sessions
+
 ### Common
 - Region: India (.in) default, configurable via `zoho config set region <region>`
 - Auth: OAuth2 with browser-based consent flow, tokens at `~/.zoho-cli/tokens.json`
 - Config: `~/.zoho-cli/config.json`
-- Env var overrides: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_REGION`, `ZOHO_PORTAL_ID`
+- Env var overrides: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_REGION`, `ZOHO_PORTAL_ID`, `ZOHO_BILLING_ORG_ID`, `ZOHO_PAYMENTS_ACCOUNT_ID`
 - Token refresh: 401 responses trigger automatic refresh + retry
 
 ## Future Scope
 
 - MCP server layer (share API client with CLI)
-- Zoho Books, Payroll plugins
+- Zoho Payroll plugin
+- Zoho Payments sandbox mode (`ZohoPaySandbox.*` scopes + sandbox soid/host)
 - Auto-generation from Zoho OpenAPI specs (`github.com/zoho/crm-oas`)

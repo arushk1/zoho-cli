@@ -66,9 +66,29 @@ export default class AuthLogin extends BaseCommand<typeof AuthLogin> {
         'ZohoBooks.fullaccess.all',
         // Expense
         'ZohoExpense.fullaccess.ALL',
+        // Billing (scope prefix kept its legacy Subscriptions name)
+        'ZohoSubscriptions.fullaccess.all',
       ].join(','),
     }),
+    'payments-account': Flags.string({
+      description:
+        'Zoho Payments account ID. Adds ZohoPay.* scopes and uses the org-scoped consent endpoint Zoho Payments requires (defaults to config defaultPaymentsAccount)',
+      env: 'ZOHO_PAYMENTS_ACCOUNT_ID',
+    }),
   }
+
+  static PAYMENTS_SCOPES = [
+    'ZohoPay.payments.CREATE',
+    'ZohoPay.payments.READ',
+    'ZohoPay.refunds.CREATE',
+    'ZohoPay.refunds.READ',
+    'ZohoPay.paymentlinks.CREATE',
+    'ZohoPay.paymentlinks.READ',
+    'ZohoPay.paymentlinks.UPDATE',
+    'ZohoPay.customers.ALL',
+    'ZohoPay.payouts.READ',
+    'ZohoPay.settings.READ',
+  ]
 
   async run(): Promise<void> {
     const { flags } = this
@@ -82,11 +102,19 @@ export default class AuthLogin extends BaseCommand<typeof AuthLogin> {
     const redirectUri = `http://localhost:${flags.port}/callback`
     const scopes = flags.scopes.split(',').map((s) => s.trim())
 
+    const paymentsAccount = flags['payments-account'] ?? config.defaultPaymentsAccount
+    if (paymentsAccount) {
+      for (const scope of AuthLogin.PAYMENTS_SCOPES) {
+        if (!scopes.includes(scope)) scopes.push(scope)
+      }
+    }
+
     const authUrl = buildAuthorizationUrl({
       clientId: config.clientId,
       region: config.region,
       redirectUri,
       scopes,
+      soid: paymentsAccount ? `zohopay.${paymentsAccount}` : undefined,
     })
 
     const { server, codePromise } = await startCallbackServer(flags.port)

@@ -48,6 +48,13 @@ export const DESK_REGION_DOMAINS: Record<ZohoRegion, string> = {
   ca: 'desk.zoho.ca',
 }
 
+// Zoho Payments is only available for businesses registered in India and the US,
+// and lives on its own domain (payments.zoho.*) outside the shared zohoapis table.
+export const PAYMENTS_REGION_DOMAINS: Partial<Record<ZohoRegion, string>> = {
+  in: 'payments.zoho.in',
+  us: 'payments.zoho.com',
+}
+
 export const configSchema = z.object({
   region: z.enum(ZOHO_REGIONS).default('in'),
   clientId: z.string().optional(),
@@ -55,6 +62,8 @@ export const configSchema = z.object({
   defaultOrg: z.string().optional(),
   defaultPortal: z.string().optional(),
   defaultBookingsWorkspace: z.string().optional(),
+  defaultBillingOrg: z.string().optional(),
+  defaultPaymentsAccount: z.string().optional(),
   outputFormat: z.enum(['json']).default('json'),
 })
 
@@ -66,4 +75,6 @@ export const ENV_MAP: Record<string, keyof ZohoConfig> = {
   ZOHO_CLIENT_SECRET: 'clientSecret',
   ZOHO_DEFAULT_ORG: 'defaultOrg',
   ZOHO_PORTAL_ID: 'defaultPortal',
+  ZOHO_BILLING_ORG_ID: 'defaultBillingOrg',
+  ZOHO_PAYMENTS_ACCOUNT_ID: 'defaultPaymentsAccount',
 }

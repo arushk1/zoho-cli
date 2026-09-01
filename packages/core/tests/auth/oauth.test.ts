@@ -41,6 +41,30 @@ describe('OAuth', () => {
       expect(url).toContain('prompt=consent')
     })
 
+    it('uses the org-scoped endpoint with soid for Zoho Payments', () => {
+      const url = buildAuthorizationUrl({
+        clientId: '1000.ABC',
+        region: 'in',
+        redirectUri: 'http://localhost:8901/callback',
+        scopes: ['ZohoPay.payments.READ'],
+        soid: 'zohopay.123456',
+      })
+      expect(url).toContain('accounts.zoho.in/oauth/v2/org/auth')
+      expect(url).toContain('soid=zohopay.123456')
+      expect(url).toContain('scope=ZohoPay.payments.READ')
+    })
+
+    it('keeps the plain auth endpoint when soid is absent', () => {
+      const url = buildAuthorizationUrl({
+        clientId: '1000.ABC',
+        region: 'in',
+        redirectUri: 'http://localhost:8901/callback',
+        scopes: ['ZohoCRM.modules.ALL'],
+      })
+      expect(url).not.toContain('/oauth/v2/org/auth')
+      expect(url).not.toContain('soid=')
+    })
+
     it('builds correct URL for US region', () => {
       const url = buildAuthorizationUrl({
         clientId: '1000.XYZ',

@@ -17,13 +17,15 @@
     "@oclif/core": "^4.10.0",
     "@oclif/plugin-help": "^6.2.0",
     "@zoho-cli/core": "workspace:*",
-    "@zoho-cli/plugin-books": "workspace:*",
+    "@zoho-cli/plugin-billing": "workspace:*",
     "@zoho-cli/plugin-bookings": "workspace:*",
+    "@zoho-cli/plugin-books": "workspace:*",
     "@zoho-cli/plugin-crm": "workspace:*",
-    "@zoho-cli/plugin-projects": "workspace:*",
-    "@zoho-cli/plugin-people": "workspace:*",
-    "@zoho-cli/plugin-expense": "workspace:*",
     "@zoho-cli/plugin-desk": "workspace:*",
+    "@zoho-cli/plugin-expense": "workspace:*",
+    "@zoho-cli/plugin-payments": "workspace:*",
+    "@zoho-cli/plugin-people": "workspace:*",
+    "@zoho-cli/plugin-projects": "workspace:*",
     "open": "^11.0.0"
   },
   "devDependencies": {
@@ -40,13 +42,15 @@
     "topicSeparator": " ",
     "plugins": [
       "@oclif/plugin-help",
-      "@zoho-cli/plugin-books",
+      "@zoho-cli/plugin-billing",
       "@zoho-cli/plugin-bookings",
+      "@zoho-cli/plugin-books",
       "@zoho-cli/plugin-crm",
-      "@zoho-cli/plugin-projects",
-      "@zoho-cli/plugin-people",
+      "@zoho-cli/plugin-desk",
       "@zoho-cli/plugin-expense",
-      "@zoho-cli/plugin-desk"
+      "@zoho-cli/plugin-payments",
+      "@zoho-cli/plugin-people",
+      "@zoho-cli/plugin-projects"
     ],
     "topics": {
       "auth": {
