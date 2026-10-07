@@ -18,7 +18,7 @@ A comprehensive command-line interface for managing Zoho applications. Built wit
 Requires Node.js >= 20 and [pnpm](https://pnpm.io).
 
 ```bash
-git clone https://github.com/your-username/zoho-cli.git
+git clone https://github.com/arushk1/zoho-cli.git
 cd zoho-cli
 pnpm install
 pnpm build
@@ -36,20 +36,26 @@ cd packages/cli && pnpm link --global
 
 ## Agent Skill
 
-This repository ships a bundled agent skill at [`skills/zoho-cli`](./skills/zoho-cli). Agent runtimes that discover repo-local skills can invoke `$zoho-cli` for Zoho command examples, JSON-output rules, product-specific gotchas, and local development guidance.
+This repository ships an agent skill at [`skills/zoho-cli`](./skills/zoho-cli) that teaches coding agents (Claude Code, Codex, Cursor, and others) how to use the `zoho` CLI: install and auth steps, JSON-output rules, and per-product command references with API gotchas.
 
-The skill includes:
+- [`SKILL.md`](./skills/zoho-cli/SKILL.md): setup, operating rules, auth/config, error handling, and an index of products
+- [`references/<product>.md`](./skills/zoho-cli/references): commands, examples, and gotchas for each product (loaded on demand)
+- [`agents/openai.yaml`](./skills/zoho-cli/agents/openai.yaml): UI metadata for Codex
 
-- [`SKILL.md`](./skills/zoho-cli/SKILL.md) for trigger and workflow guidance
-- [`agents/openai.yaml`](./skills/zoho-cli/agents/openai.yaml) for UI metadata
-- [`references/commands.md`](./skills/zoho-cli/references/commands.md) for the command catalog
-
-For agent runtimes that only load global skills, install it from the checkout:
+Install the skill into your agents with [`skills`](https://skills.sh):
 
 ```bash
-mkdir -p ~/.agents/skills
-ln -s "$(pwd)/skills/zoho-cli" ~/.agents/skills/zoho-cli
+npx skills add arushk1/zoho-cli
 ```
+
+Or link it from a checkout so it tracks the repo:
+
+```bash
+ln -s "$(pwd)/skills/zoho-cli" ~/.claude/skills/zoho-cli    # Claude Code
+ln -s "$(pwd)/skills/zoho-cli" ~/.agents/skills/zoho-cli    # other agents
+```
+
+The skill drives the `zoho` CLI, so install the CLI too (see Installation above).
 
 ## Setup
 
@@ -57,7 +63,7 @@ ln -s "$(pwd)/skills/zoho-cli" ~/.agents/skills/zoho-cli
 
 1. Go to [Zoho API Console](https://api-console.zoho.com/) (or `.in`, `.eu`, etc. for your region)
 2. Create a **Server-based Application**
-3. Set the redirect URI to `http://localhost:8899/callback`
+3. Set the redirect URI to `http://localhost:8901/callback`
 4. Note your **Client ID** and **Client Secret**
 
 ### 2. Configure the CLI
@@ -65,7 +71,7 @@ ln -s "$(pwd)/skills/zoho-cli" ~/.agents/skills/zoho-cli
 ```bash
 zoho config set clientId YOUR_CLIENT_ID
 zoho config set clientSecret YOUR_CLIENT_SECRET
-zoho config set region in          # in, com, eu, com.au, com.cn, jp
+zoho config set region in          # us, eu, in, au, jp, ca
 ```
 
 ### 3. Authenticate
