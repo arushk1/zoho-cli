@@ -1,6 +1,6 @@
 ---
 name: zoho-cli
-description: Interact with Zoho applications through the globally installed `zoho` CLI or this repository's development CLI. Use when the user asks to query, report on, create, update, or manage Zoho CRM, Books, Expense, People, Projects, Desk, or Bookings data; asks for Zoho command examples; needs JSON output from Zoho; or is developing/testing commands in this zoho-cli repository.
+description: Interact with Zoho applications through the globally installed `zoho` CLI or this repository's development CLI. Use when the user asks to query, report on, create, update, or manage Zoho CRM, Books, Expense, People, Projects, Desk, Bookings, or Analytics data; asks for Zoho command examples; needs JSON output from Zoho; or is developing/testing commands in this zoho-cli repository.
 ---
 
 # Zoho CLI
@@ -39,6 +39,7 @@ zoho crm records list Leads --fields "Last_Name,Email" 2>/dev/null
 - For Zoho People date flags, use `dd-MMM-yyyy`, for example `01-Apr-2026`.
 - For Books, Expense, and Desk, set or pass an org ID with `--org`, `ZOHO_DESK_ORG_ID`, or `zoho config set defaultOrg <id>` when auto-detection is not appropriate.
 - For Projects, set or pass a portal ID with `--portal`, `ZOHO_PORTAL_ID`, or `zoho config set defaultPortal <id>`.
+- For Analytics, set or pass an org ID with `--org`, `ZOHO_ANALYTICS_ORG_ID`, or `zoho config set defaultAnalyticsOrg <id>` (auto-detected otherwise). SQL and criteria double-quote table/column names and single-quote strings. `analytics query` runs SQL as a bulk job and waits for the result.
 - For Bookings, set or pass a workspace ID with `--workspace`, `ZOHO_BOOKINGS_WORKSPACE_ID`, or `zoho config set defaultBookingsWorkspace <id>`.
 
 ## Auth And Config
@@ -72,6 +73,10 @@ zoho projects tasks list -p <project-id> --status open
 zoho desk tickets list --status Open --per-page 50
 zoho desk contacts search --query "acme"
 zoho bookings appointments list --status UPCOMING
+zoho analytics workspaces list
+zoho analytics views list -w <workspace-id> --type table
+zoho analytics query -w <workspace-id> --sql 'SELECT "Region", SUM("Sales") FROM "Sales" GROUP BY "Region"'
+zoho analytics data export -w <workspace-id> --view <view-id> --criteria "\"Region\"='East'"
 zoho bookings availability slots --service <svc> --staff <stf> --selected-date 2026-05-01
 ```
 

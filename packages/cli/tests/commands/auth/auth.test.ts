@@ -71,6 +71,11 @@ describe('auth login', () => {
     expect(defaultScopes).toContain('ZohoSubscriptions.fullaccess.all')
   })
 
+  it('default scopes include Analytics', () => {
+    const defaultScopes = (AuthLogin.flags.scopes as any).default as string
+    expect(defaultScopes).toContain('ZohoAnalytics.fullaccess.all')
+  })
+
   it('does not include ZohoPay scopes by default (they need the org-scoped consent endpoint)', () => {
     const defaultScopes = (AuthLogin.flags.scopes as any).default as string
     expect(defaultScopes).not.toContain('ZohoPay')

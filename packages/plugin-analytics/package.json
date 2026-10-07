@@ -1,0 +1,72 @@
+{
+  "name": "@zoho-cli/plugin-analytics",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.10.0",
+    "@zoho-cli/core": "workspace:*",
+    "form-data": "^4.0.5"
+  },
+  "devDependencies": {
+    "@oclif/test": "^4.1.0",
+    "@types/node": "^25.5.2",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "topics": {
+      "analytics": {
+        "description": "Zoho Analytics commands",
+        "subtopics": {
+          "orgs": {
+            "description": "Zoho Analytics organizations"
+          },
+          "workspaces": {
+            "description": "List, inspect, create and delete workspaces"
+          },
+          "folders": {
+            "description": "Folders within a workspace"
+          },
+          "views": {
+            "description": "Tables, reports, dashboards and query tables in a workspace"
+          },
+          "dashboards": {
+            "description": "Dashboards across all workspaces"
+          },
+          "tables": {
+            "description": "Create tables"
+          },
+          "query-tables": {
+            "description": "Create query tables (saved SQL views)"
+          },
+          "rows": {
+            "description": "Add, update and delete table rows"
+          },
+          "data": {
+            "description": "Export and import table data"
+          },
+          "export-jobs": {
+            "description": "Status and download of bulk export jobs"
+          },
+          "users": {
+            "description": "Organization and workspace users"
+          },
+          "datasources": {
+            "description": "Data sources and syncs"
+          },
+          "raw": {
+            "description": "Read-only passthrough for unwrapped endpoints"
+          }
+        }
+      }
+    }
+  }
+}

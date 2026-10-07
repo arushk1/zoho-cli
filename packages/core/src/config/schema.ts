@@ -48,6 +48,16 @@ export const DESK_REGION_DOMAINS: Record<ZohoRegion, string> = {
   ca: 'desk.zoho.ca',
 }
 
+// Zoho Analytics serves its REST API from a dedicated analyticsapi.* host; CA uses zohocloud.ca.
+export const ANALYTICS_REGION_DOMAINS: Record<ZohoRegion, string> = {
+  us: 'analyticsapi.zoho.com',
+  eu: 'analyticsapi.zoho.eu',
+  in: 'analyticsapi.zoho.in',
+  au: 'analyticsapi.zoho.com.au',
+  jp: 'analyticsapi.zoho.jp',
+  ca: 'analyticsapi.zohocloud.ca',
+}
+
 // Zoho Payments is only available for businesses registered in India and the US,
 // and lives on its own domain (payments.zoho.*) outside the shared zohoapis table.
 export const PAYMENTS_REGION_DOMAINS: Partial<Record<ZohoRegion, string>> = {
@@ -64,6 +74,7 @@ export const configSchema = z.object({
   defaultBookingsWorkspace: z.string().optional(),
   defaultBillingOrg: z.string().optional(),
   defaultPaymentsAccount: z.string().optional(),
+  defaultAnalyticsOrg: z.string().optional(),
   outputFormat: z.enum(['json']).default('json'),
 })
 
@@ -77,4 +88,5 @@ export const ENV_MAP: Record<string, keyof ZohoConfig> = {
   ZOHO_PORTAL_ID: 'defaultPortal',
   ZOHO_BILLING_ORG_ID: 'defaultBillingOrg',
   ZOHO_PAYMENTS_ACCOUNT_ID: 'defaultPaymentsAccount',
+  ZOHO_ANALYTICS_ORG_ID: 'defaultAnalyticsOrg',
 }

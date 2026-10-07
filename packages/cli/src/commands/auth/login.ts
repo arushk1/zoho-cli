@@ -68,6 +68,8 @@ export default class AuthLogin extends BaseCommand<typeof AuthLogin> {
         'ZohoExpense.fullaccess.ALL',
         // Billing (scope prefix kept its legacy Subscriptions name)
         'ZohoSubscriptions.fullaccess.all',
+        // Analytics (fullaccess covers endpoints whose documented scopes are missing from the published list)
+        'ZohoAnalytics.fullaccess.all',
       ].join(','),
     }),
     'payments-account': Flags.string({

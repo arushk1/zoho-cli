@@ -17,6 +17,7 @@
     "@oclif/core": "^4.10.0",
     "@oclif/plugin-help": "^6.2.0",
     "@zoho-cli/core": "workspace:*",
+    "@zoho-cli/plugin-analytics": "workspace:*",
     "@zoho-cli/plugin-billing": "workspace:*",
     "@zoho-cli/plugin-bookings": "workspace:*",
     "@zoho-cli/plugin-books": "workspace:*",
@@ -42,6 +43,7 @@
     "topicSeparator": " ",
     "plugins": [
       "@oclif/plugin-help",
+      "@zoho-cli/plugin-analytics",
       "@zoho-cli/plugin-billing",
       "@zoho-cli/plugin-bookings",
       "@zoho-cli/plugin-books",

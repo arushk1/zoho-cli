@@ -1,10 +1,10 @@
 # Zoho CLI
 
-CLI tool for managing Zoho applications (CRM, Books, Billing, Payments, People, and more). Built with TypeScript, oclif v4, and pnpm workspaces. Designed for LLM/Claude consumption with JSON-only output.
+CLI tool for managing Zoho applications (CRM, Books, Billing, Payments, People, Analytics, and more). Built with TypeScript, oclif v4, and pnpm workspaces. Designed for LLM/Claude consumption with JSON-only output.
 
 ## Architecture
 
-Monorepo with 9 plugin packages plus core and cli:
+Monorepo with 10 plugin packages plus core and cli:
 
 - **`packages/core`** (`@zoho-cli/core`) — Shared library: config, OAuth2 auth, HTTP client, JSON output envelopes
 - **`packages/cli`** (`@zoho-cli/cli`) — oclif CLI entry point with `auth` and `config` commands
@@ -17,6 +17,7 @@ Monorepo with 9 plugin packages plus core and cli:
 - **`packages/plugin-expense`** (`@zoho-cli/plugin-expense`) — oclif plugin with 73 Expense commands
 - **`packages/plugin-billing`** (`@zoho-cli/plugin-billing`) — oclif plugin with 44 Billing commands
 - **`packages/plugin-payments`** (`@zoho-cli/plugin-payments`) — oclif plugin with 18 Payments commands
+- **`packages/plugin-analytics`** (`@zoho-cli/plugin-analytics`) — oclif plugin with 26 Analytics commands
 
 ## Build & Test
 
@@ -31,6 +32,7 @@ pnpm --filter @zoho-cli/plugin-people test      # Test People plugin only
 pnpm --filter @zoho-cli/plugin-bookings test   # Test Bookings plugin only
 pnpm --filter @zoho-cli/plugin-billing test    # Test Billing plugin only
 pnpm --filter @zoho-cli/plugin-payments test   # Test Payments plugin only
+pnpm --filter @zoho-cli/plugin-analytics test  # Test Analytics plugin only
 ```
 
 Each package has two tsconfigs:
@@ -287,6 +289,42 @@ Key differences from other plugins:
 - Zoho documents no list endpoints for refunds, payment links, customers, or mandates — `payments raw get` covers those gaps
 - Payment-link cancel/update use `PUT` (not POST); refund create is nested (`POST /payments/{payment_id}/refunds`) while refund get is top-level (`GET /refunds/{refund_id}`)
 
+### Adding a new Analytics command
+
+All Analytics commands extend `AnalyticsBaseCommand` from `packages/plugin-analytics/src/analytics-base-command.ts`.
+
+```typescript
+import { Flags } from '@oclif/core'
+import { AnalyticsBaseCommand } from '../../../analytics-base-command.js'
+
+export default class AnalyticsExampleList extends AnalyticsBaseCommand<typeof AnalyticsExampleList> {
+  static id = 'analytics example list'
+  static summary = 'Description here'
+
+  static flags = {
+    workspace: Flags.string({ description: 'Workspace ID', required: true, char: 'w' }),
+  }
+
+  async run(): Promise<void> {
+    const { flags } = this
+    try {
+      const data = await this.analyticsGet(`/workspaces/${flags.workspace}/example`, { keyword: 'x' })
+      this.outputSuccess(data.examples ?? [], { action: 'analytics.example.list' })
+    } catch (error: any) {
+      this.handleApiError(error)
+    }
+  }
+}
+```
+
+Key differences from other plugins:
+- Helpers `analyticsGet/Post/Put/Delete(path, config?)` take a plain object that is JSON-encoded into the single `CONFIG` query param (Analytics has no other params and no JSON bodies), inject the `ZANALYTICS-ORGID` header, and unwrap the `{ status, summary, data }` envelope (204 → `{}`). Pass `{ org: false }` to `analyticsGet` for `/orgs`, `/dashboards`, `/recentviews`, `/workspaces`, `/views/{id}`, which don't need the header.
+- `analyticsDownload` returns the raw export body (`Buffer`); `emitExport` writes it to `--output` or embeds text formats (JSON parsed) in the envelope. `analyticsUpload` sends multipart `FILE` for imports.
+- Org ID resolved from `--org` flag > `config.defaultAnalyticsOrg` > `ZOHO_ANALYTICS_ORG_ID` env > auto-detect via `GET /orgs` (`isDefault`)
+- SQL only runs as a bulk export job: `analytics query` creates the job, polls with `waitForExportJob` (`jobCode` `"1004"` = done), then downloads
+- IDs are 19-digit strings — never convert them to numbers
+- Pure helpers (envelope, CONFIG encoding, job codes) live in `analytics-utils.ts`; behavior tests mock `_apiClient` in `tests/analytics-behavior.test.ts`
+
 ### Adding a new CLI command
 
 CLI commands extend `BaseCommand` from `packages/cli/src/base-command.ts`. Same pattern but without CRM-specific features (no `apiClient`, no `moduleCache`).
@@ -475,6 +513,24 @@ packages/
       mandates/                — get, notify, execute
       sessions/                — create, get
       raw/                     — get (read-only passthrough)
+  plugin-analytics/src/
+    analytics-base-command.ts  — Analytics base with --org flag, CONFIG-param helpers, ZANALYTICS-ORGID header, export/import/job-poll helpers
+    analytics-utils.ts         — Envelope unwrap, CONFIG encoding, job codes, export body parsing (pure, unit-tested)
+    commands/analytics/
+      query.ts                 — SQL query via bulk export job (create → poll → download)
+      orgs/                    — list
+      workspaces/              — list (--scope all|owned|shared), get, create, delete
+      folders/                 — list
+      views/                   — list (--type filter), get, rename, delete, recent
+      dashboards/              — list
+      tables/                  — create (tableDesign)
+      query-tables/            — create
+      rows/                    — add, update, delete (--criteria or --all)
+      data/                    — export (sync or --async), import (existing table or --table-name)
+      export-jobs/             — get, download
+      users/                   — list (org, or workspace with -w)
+      datasources/             — list, sync
+      raw/                     — get (read-only passthrough)
 ```
 
 ## Zoho API Details
@@ -541,11 +597,23 @@ packages/
 - Rate limiting: 600 req/min (payments/customers), 60 req/min (refunds); no rate-limit response headers
 - Card capture is a browser-widget flow — the CLI surface is payments, refunds, payment links, customers, payouts, mandates, sessions
 
+### Analytics API (v2)
+- Base URL: `https://analyticsapi.zoho.{domain}/restapi/v2` — dedicated host from `ANALYTICS_REGION_DOMAINS`; Canada is `analyticsapi.zohocloud.ca`
+- Single API version: v2
+- Required header: `ZANALYTICS-ORGID` on almost every request (error 8083 if missing); not needed for `/orgs`, `/dashboards*`, `/recentviews`
+- Parameters: one URL-encoded JSON `CONFIG` query param for every method; imports send multipart `FILE`
+- Envelope: `{ status: "success"|"failure", summary, data }`; errors carry `data.errorCode`/`data.errorMessage` with `summary` as a symbolic code. Exports return the raw file, not the envelope
+- Async jobs: SQL and large exports run as bulk jobs; poll `/bulk/workspaces/{ws}/exportjobs/{job}` (`jobCode` 1001/1002 pending, 1003 error, 1004 done, 1005 not found); results kept 1 hour; max 5 concurrent jobs per org
+- Limits: sync export is blocked for tables over 1M rows, query tables, dashboards and live-connect workspaces; sync import max 20 MB
+- Rate limiting: daily API units by plan (1k–100k), 100 req/min overall; no rate-limit response headers
+- Scope format: `ZohoAnalytics.{group}.{operation}` (e.g. `ZohoAnalytics.data.read`); default login uses `ZohoAnalytics.fullaccess.all`
+- Full endpoint reference: `docs/research/zoho-analytics-api.md`
+
 ### Common
 - Region: India (.in) default, configurable via `zoho config set region <region>`
 - Auth: OAuth2 with browser-based consent flow, tokens at `~/.zoho-cli/tokens.json`
 - Config: `~/.zoho-cli/config.json`
-- Env var overrides: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_REGION`, `ZOHO_PORTAL_ID`, `ZOHO_BILLING_ORG_ID`, `ZOHO_PAYMENTS_ACCOUNT_ID`
+- Env var overrides: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_REGION`, `ZOHO_PORTAL_ID`, `ZOHO_BILLING_ORG_ID`, `ZOHO_PAYMENTS_ACCOUNT_ID`, `ZOHO_ANALYTICS_ORG_ID`
 - Token refresh: 401 responses trigger automatic refresh + retry
 
 ## Future Scope
